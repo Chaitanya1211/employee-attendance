@@ -1,0 +1,278 @@
+// import axios from "axios";
+// import { useState } from "react";
+// import { useParams } from 'react-router-dom';
+// import { Base64 } from "js-base64";
+
+// export function EmployeeRegister() {
+//     const { urlEmail } = useParams();
+//     console.log(urlEmail);
+//     const email = Base64.decode(urlEmail);
+
+//     // Name states
+//     const [firstname, setFirstName] = useState("");
+//     const [middlename, setMiddleName] = useState("");
+//     const [lastname, setLastName] = useState("");
+//     const [dob, setDob] = useState("");
+//     const [gender, setGender] = useState("");
+//     // Contact states
+//     const [phoneNumber, setPhoneNumber] = useState("");
+//     // Address states
+//     const [addLine1, setAddLine1] = useState("");
+//     const [addLine2, setAddLine2] = useState("");
+//     const [city, setCity] = useState("");
+//     const [state, setStateName] = useState("");
+//     const [pincode, setPincode] = useState("");
+//     // Emergency contact
+//     const [emerContactName, setemerContactName] = useState("");
+//     const [emerContactRelation, setemerContactRelation] = useState("");
+//     const [emerContactNumber, setemerContactNumber] = useState("");
+//     // Password
+//     const [password, setPassword] = useState("");
+//     const [cpassword, setCpassword] = useState("");
+
+//     function handleSubmit(event) {
+//         event.preventDefault();
+//         const data = {
+//             firstName: firstname,
+//             middleName: middlename,
+//             lastName: lastname,
+//             dateOfBirth: dob,
+//             gender: gender,
+//             contactNumber: phoneNumber,
+//             email: email,
+//             address: {
+//                 line1: addLine1,
+//                 line2: addLine2,
+//                 city: city,
+//                 state: state,
+//                 postalCode: pincode
+//             },
+//             emergencyContact: {
+//                 name: emerContactName,
+//                 relation: emerContactRelation,
+//                 phoneNo: emerContactNumber
+//             },
+//             password: password
+//         };
+
+//         axios({
+//             url: "http://localhost:8080/employee/register",
+//             method: "POST",
+//             data: data,
+//             headers: {
+//                 "Content-Type": 'application/json'
+//             }
+//         }).then((response) => {
+//             console.log(response.data);
+//         }).catch((error) => {
+//             console.log("Error :", error)
+//         })
+//     }
+//     return (
+//         <>
+//             <div className="d-flex justify-content-center py-5">
+//                 <div className="col-lg-8">
+//                     <div className="card">
+//                         <div className="card-body px-5 pt-3 pb-5">
+//                             <div className="border-bottom py-4">
+//                                 <h5>
+//                                     Dear {email},
+//                                 </h5>
+//                                 <p className="m-0">
+//                                     Welcome to [Company Name]! We are excited to have you join our team. Please take a few moments to complete the registration form below to finalize your account.
+//                                 </p>
+//                             </div>
+//                             <form onSubmit={handleSubmit}>
+//                                 <div className="border-bottom py-3">
+//                                     <h5>Personal Details</h5>
+//                                     <div className="row">
+//                                         <div className="col-md-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-firstname-input" className="form-label">First Name</label><span class="text-danger"> *</span>
+//                                                 <input type="text" className="form-control" id="formrow-firstname-input" placeholder="Enter Your First Name" value={firstname} onChange={(e) => setFirstName(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-md-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-middlename-input" className="form-label">Middle Name</label>
+//                                                 <input type="text" className="form-control" id="formrow-middlename-input" placeholder="Enter Your Middle Name" value={middlename} onChange={(e) => setMiddleName(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-md-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-lastname-input" className="form-label">Last Name<span class="text-danger"> *</span></label>
+//                                                 <input type="text" className="form-control" id="formrow-lastname-input" placeholder="Enter Your Last Name" value={lastname} onChange={(e) => setLastName(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                     <div className="row">
+//                                         <div className="col-md-4">
+//                                             <div className="mb-3">
+//                                                 <label className="form-label">Date of Birth <span class="text-danger"> *</span></label>
+//                                                 <div className="docs-datepicker">
+//                                                     <div className="input-group">
+//                                                         <input type="text" className="form-control docs-date" name="date"
+//                                                             placeholder="Pick a date" autocomplete="off" value={dob} onChange={(e) => setDob(e.target.value)} />
+//                                                         <button type="button" className="btn btn-secondary docs-datepicker-trigger" disabled>
+//                                                             <i className="mdi mdi-calendar" aria-hidden="true"></i>
+//                                                         </button>
+//                                                     </div>
+//                                                     <div className="docs-datepicker-container"></div>
+//                                                 </div>
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-md-4">
+//                                             <label className="d-block mb-2">Gender <span class="text-danger"> *</span></label>
+//                                             <div className="form-check form-check-inline">
+//                                                 <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="male" onChange={(e) => setGender(e.target.value)} />
+//                                                 <label className="form-check-label" for="inlineRadio1">Male</label>
+//                                             </div>
+//                                             <div className="form-check form-check-inline">
+//                                                 <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="female" onChange={(e) => setGender(e.target.value)} />
+//                                                 <label className="form-check-label" for="inlineRadio2">Female</label>
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+
+//                                 <div className="border-bottom py-3">
+//                                     <h5>Contact Details</h5>
+//                                     <div className="row">
+//                                         <div className="col-md-6">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-email-input" className="form-label">Email<span class="text-danger"> *</span></label>
+//                                                 <input type="email" className="form-control" id="formrow-email-input" placeholder="Enter Your Email ID" value={email} readOnly />
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-md-6">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-number-input" className="form-label">Phone Number<span class="text-danger"> *</span></label>
+//                                                 <input type="text" className="form-control" id="formrow-number-input" placeholder="Enter Your Contact Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                                 <div className="border-bottom py-3">
+//                                     <h5>Address</h5>
+//                                     <div className="row">
+//                                         <div className="col-md-6">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-addline1-input" className="form-label">Line 1<span class="text-danger"> *</span></label>
+//                                                 <input type="text" className="form-control" id="formrow-addline1-input" placeholder="Address line 1" value={addLine1} onChange={(e) => setAddLine1(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-md-6">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-addline2-input" className="form-label">Line 2</label>
+//                                                 <input type="text" className="form-control" id="formrow-addline2-input" placeholder="Address line 2" value={addLine2} onChange={(e) => setAddLine2(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                     <div className="row">
+//                                         <div className="col-lg-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-inputCity" className="form-label">City<span class="text-danger"> *</span></label>
+//                                                 <input type="text" className="form-control" id="formrow-inputCity" placeholder="Enter Your Living City" value={city} onChange={(e) => setCity(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-lg-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-inputState" className="form-label">State<span class="text-danger"> *</span></label>
+//                                                 <select id="formrow-inputState" className="form-select" onChange={(e) => setStateName(e.target.value)}>
+//                                                     <option value="AP">Andhra Pradesh</option>
+//                                                     <option value="AR">Arunachal Pradesh</option>
+//                                                     <option value="AS">Assam</option>
+//                                                     <option value="BR">Bihar</option>
+//                                                     <option value="CT">Chhattisgarh</option>
+//                                                     <option value="GA">Gujarat</option>
+//                                                     <option value="HR">Haryana</option>
+//                                                     <option value="HP">Himachal Pradesh</option>
+//                                                     <option value="JK">Jammu and Kashmir</option>
+//                                                     <option value="GA">Goa</option>
+//                                                     <option value="JH">Jharkhand</option>
+//                                                     <option value="KA">Karnataka</option>
+//                                                     <option value="KL">Kerala</option>
+//                                                     <option value="MP">Madhya Pradesh</option>
+//                                                     <option value="MH">Maharashtra</option>
+//                                                     <option value="MN">Manipur</option>
+//                                                     <option value="ML">Meghalaya</option>
+//                                                     <option value="MZ">Mizoram</option>
+//                                                     <option value="NL">Nagaland</option>
+//                                                     <option value="OR">Odisha</option>
+//                                                     <option value="PB">Punjab</option>
+//                                                     <option value="RJ">Rajasthan</option>
+//                                                     <option value="SK">Sikkim</option>
+//                                                     <option value="TN">Tamil Nadu</option>
+//                                                     <option value="TG">Telangana</option>
+//                                                     <option value="TR">Tripura</option>
+//                                                     <option value="UT">Uttarakhand</option>
+//                                                     <option value="UP">Uttar Pradesh</option>
+//                                                     <option value="WB">West Bengal</option>
+//                                                     <option value="AN">Andaman and Nicobar Islands</option>
+//                                                     <option value="CH">Chandigarh</option>
+//                                                     <option value="DN">Dadra and Nagar Haveli</option>
+//                                                     <option value="DD">Daman and Diu</option>
+//                                                     <option value="DL">Delhi</option>
+//                                                     <option value="LD">Lakshadweep</option>
+//                                                     <option value="PY">Puducherry</option>
+//                                                 </select>
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-lg-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-inputZip" className="form-label">Pin Code<span class="text-danger"> *</span></label>
+//                                                 <input type="text" className="form-control" id="formrow-inputZip" placeholder="Enter Your Zip Code" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+
+//                                 <div className="border-bottom py-3">
+//                                     <h5>Emergency Contact</h5>
+//                                     <div className="row">
+//                                         <div className="col-md-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-name-input" className="form-label">Name<span class="text-danger"> *</span></label>
+//                                                 <input type="text" className="form-control" id="formrow-name-input" placeholder="Enter Name" value={emerContactName} onChange={(e) => setemerContactName(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-md-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-relation-input" className="form-label">Relation<span class="text-danger"> *</span></label>
+//                                                 <input type="text" className="form-control" id="formrow-relation-input" placeholder="Enter Relation" value={emerContactRelation} onChange={(e) => setemerContactRelation(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                         <div className="col-md-4">
+//                                             <div className="mb-3">
+//                                                 <label htmlFor="formrow-contactNo-input" className="form-label">Last Name<span class="text-danger"> *</span></label>
+//                                                 <input type="text" className="form-control" id="formrow-contactNo-input" placeholder="Enter Contact Number" value={emerContactNumber} onChange={(e) => setemerContactNumber(e.target.value)} />
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+
+//                                 <div className="row py-3">
+//                                     <div className="col-md-6">
+//                                         <div className="mb-3">
+//                                             <label htmlFor="formrow-password-input" className="form-label">Password<span class="text-danger"> *</span></label>
+//                                             <input type="password" className="form-control" id="formrow-password-input" placeholder="Enter Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+//                                         </div>
+//                                     </div>
+//                                     <div className="col-md-6">
+//                                         <div className="mb-3">
+//                                             <label htmlFor="formrow-cpassword-input" className="form-label">Cofirm Password<span class="text-danger"> *</span></label>
+//                                             <input type="password" className="form-control" id="formrow-cpassword-input" placeholder="Confirm Password" value={cpassword} onChange={(e) => setCpassword(e.target.value)} />
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                                 <div>
+//                                     <button type="submit" className="btn btn-primary w-md">Submit</button>
+//                                 </div>
+//                             </form>
+//                         </div>
+//                     </div>
+//                 </div>
+//             </div>
+//         </>
+//     );
+// }
