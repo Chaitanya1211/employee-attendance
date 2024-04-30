@@ -8,6 +8,7 @@ import { EmployeeRegister } from './components/employee/EmployeeRegister';
 import { AdminHome } from './components/admin/AdminHome';
 import { AdminLogin } from './components/admin/AdminLogin';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { EmployeeProfile } from './components/employee/EmployeeProfile';
 
 function App() {
 
@@ -17,6 +18,7 @@ function App() {
       <Routes>
         <Route path='/login' element={<EmployeeLogin />}/>
         <Route path='/home' element={<EmployeeHome />} />
+        <Route path='/profile' element={<EmployeeProfile />} />
         <Route path='/register/:urlEmail' element={<EmployeeRegister />} />
         {/* Admin Routes */}
         <Route path='/admin/login' element={<AdminLogin />} />

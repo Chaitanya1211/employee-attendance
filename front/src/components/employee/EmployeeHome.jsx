@@ -1,7 +1,12 @@
+import { EmployeeSidebar } from "./EmployeeSidebar";
 export function EmployeeHome(){
     return(
         <>
-        <h5>Hello dashboard</h5>
+        <div className="d-flex">
+            <div className="col-lg-2">
+                <EmployeeSidebar />
+            </div>
+        </div>
         </>
     );
 }

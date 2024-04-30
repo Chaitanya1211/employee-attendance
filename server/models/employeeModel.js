@@ -12,6 +12,9 @@ const employeeSchema = mongoose.Schema({
         type:String,
         required :true
     },
+    "profile":{
+        type :String
+    },
     "dateOfBirth":{
         type:String,
         required:true
@@ -21,7 +24,7 @@ const employeeSchema = mongoose.Schema({
         required :true
     },
     "contactNumber":{
-        type:Number,
+        type:String,
         required :true
     },
     "email":{

@@ -54,5 +54,32 @@ async function login(req, res) {
     }
 }
 
+async function getDetails(req,res){
+    try{
+        const user = req.user.email;
+        const employee = await Employee.findOne({email:user});
+        if(employee){
+            console.log(employee)
+            res.status(200).json({message : "Employee found", profile : employee})
+        }else{
+            console.log("Employee not found")
+            res.status(404).json({message : "Employee not found"})
+        }
+    }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function updateProfile(req,res){
+    try{
+
+    }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
 exports.register = register;
 exports.login = login;
+exports.getDetails = getDetails;

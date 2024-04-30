@@ -8,6 +8,7 @@ export function EmployeeLogin(){
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [showErrorAlert , setShowErrorAlert] = useState(false);
+    const [token, setToken] = useState('');
     const navigateTo = useNavigate();
     const hideAlert = () => {
         // Handle hideAlert action
@@ -32,6 +33,7 @@ export function EmployeeLogin(){
             if(response.status === 200){
                 //login success
                 // store token in localstorage
+                localStorage.setItem('token',response.data.token);
                 // navigate to home page
                 window.location.replace("http://localhost:5173/home")
             }
