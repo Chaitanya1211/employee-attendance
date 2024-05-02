@@ -6,6 +6,7 @@ import { Base64 } from "js-base64";
 import { useForm } from "react-hook-form";
 import registerSchema from '../../helper/registerValidator';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { Loader } from "../../helper/loader";
 export function EmployeeRegister() {
     const { urlEmail } = useParams();
     console.log(urlEmail);
@@ -19,6 +20,8 @@ export function EmployeeRegister() {
     const [showWarningAlert, setShowWarningAlert] = useState(false);
     const [showErrorAlert, setShowErrorAlert] = useState(false);
 
+    const [loader, setLoader] = useState(false);
+
     const onConfirm = () => {
         window.location.replace("http://localhost:5173/login")
     };
@@ -29,6 +32,7 @@ export function EmployeeRegister() {
     };
 
     const onFormSubmit = (data) => {
+        setLoader(true);
         const registerBody = { ...data, email: email };
         console.log(registerBody);
         axios({
@@ -39,12 +43,14 @@ export function EmployeeRegister() {
                 "Content-Type": 'application/json'
             }
         }).then((response) => {
+            setLoader(false);
             console.log(response);
             if (response.status === 201) {
                 // employee created successfully
                 setShowSuccessAlert(true);
             }
         }).catch((error) => {
+            setLoader(false);
             console.log("Error :", error)
             if (error.response && error.response.status === 409) {
                 // Conflict - Employee already exists
@@ -87,6 +93,7 @@ export function EmployeeRegister() {
             >
                 We are facing some internal errors. Please try again later
             </SweetAlert>
+            {loader && <Loader />}
             <div className="d-flex justify-content-center py-5">
                 <div className="col-lg-8">
                     <div className="card">

@@ -19,3 +19,28 @@
 .labels{
     margin-bottom: 5px;
 }
+.image-parent{
+    position: relative;
+}
+.edit-btn{
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 50px;
+    padding: 5px;
+    position: absolute;
+    bottom: 15px;
+    right: 10px;
+}
+.loader-overlay{
+     background: rgba(255, 255, 255, 0.8);
+     height: 100%;
+     width: 100%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     position: absolute;
+     z-index: 2;
+}
+.clock{
+    font-size: 35px;
+}

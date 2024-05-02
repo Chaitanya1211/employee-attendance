@@ -12,8 +12,9 @@ const employeeSchema = mongoose.Schema({
         type:String,
         required :true
     },
-    "profile":{
-        type :String
+    "profileImg":{
+        type :String,
+        default : null
     },
     "dateOfBirth":{
         type:String,
