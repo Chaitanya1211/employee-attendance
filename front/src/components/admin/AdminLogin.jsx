@@ -6,6 +6,7 @@ import axios from "axios";
 export function AdminLogin() {
     const [email,setEmail] =useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
     const navigateTo = useNavigate();
     function handleSubmit(event){
         event.preventDefault();
@@ -22,14 +23,26 @@ export function AdminLogin() {
                 }
         }).then((response) =>{
             console.log(response.data);
-            if(response.data.message == "success"){
-                console.log("Success navigate");
-                navigateTo("/admin/home")
-            }else{
-                // failure
+            // if(response.data.message == "success"){
+            //     localStorage.setItem("token", response.data.token)
+            //     console.log("Success navigate");
+            //     navigateTo("/admin/home")
+            // }else{
+            //     // failure
+            // }
+            if(response.status === 200){
+                localStorage.setItem("token", response.data.token);
+                window.location.replace("http://localhost:5173/admin/home")
             }
         }).catch((error)=>{
-            console.log("Error :" ,error)
+            console.log("Error :" ,error);
+            if(error.response && error.response.status === 404){
+                setError("User Not found !!")
+            }else if(error.response && error.response.status === 401){
+                setError("Invalid Credentials !!")
+            }else{
+                console.log("Server errors")
+            }
         })
 
     }
@@ -71,6 +84,7 @@ export function AdminLogin() {
                                     </a>
                                 </div>
                                 <div className="p-2">
+                                {error && <small className='px-2' style={{ color: 'red' }}>{error}</small>}
                                     <form className="form-horizontal" onSubmit={handleSubmit}>
                                         <div className="mb-3">
                                             <label htmlFor="username" className="form-label">Username</label>

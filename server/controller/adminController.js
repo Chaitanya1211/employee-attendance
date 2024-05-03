@@ -48,7 +48,7 @@ async function login(req, res) {
               res.status(200).json({message:"success", token : token})
           }else{
               // incorrect password
-              res.status(200).json({message:"failure"})
+              res.status(401).json({message:"failure"})
           }
       }else{
           res.status(404).json({message:'Admin not found'});
@@ -84,8 +84,12 @@ async function inviteEmployee(req,res){
 
 async function allEmployees(req,res){
   try{
-    const employees = await Employee.find({}, "firstName lastName email contactNumber");
-    res.json({all:employees});
+    const employees = await Employee.find({}, "firstName lastName email contactNumber profileImg");
+    if(employees){
+      res.status(200).json({all:employees});
+    }else{
+      res.status(404).json({message : "No employees found"})
+    }
   }catch(error){
     console.error('Internal server error', error);
     res.status(500).json({ error: 'Internal server error' });

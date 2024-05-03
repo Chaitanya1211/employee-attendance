@@ -22,7 +22,7 @@ export function EmployeeHome() {
             console.log(response);
             if (response.status === 200) {
                 setHome(response.data);
-                setProfile(response.data.profile);
+                setProfile(response?.data?.profile);
                 setTodayStatus(response.data.todayStatus);
             }
         }).catch((error) => {
@@ -107,7 +107,7 @@ export function EmployeeHome() {
 
             <div className="d-flex">
                 <div className="col-lg-2 position-fixed">
-                    <EmployeeSidebar />
+                    <EmployeeSidebar name={`${profile.firstName ?? ''} ${profile.lastName ?? ''}`}/>
                 </div>
 
                 <div className="col-lg-10" style={{ "marginLeft": "auto" }}>
@@ -115,7 +115,7 @@ export function EmployeeHome() {
                         <div className="d-flex justify-content-between">
                             {/* greeting column */}
                             <div className="col-lg-4">
-                                <h4>Good Afternoon {profile.firstName} !!!</h4>
+                                <h4>Good Afternoon {profile.firstName ?? ''} !!!</h4>
                             </div>
                             {/* time and mark column */}
                             <div className="col-lg-3">
@@ -134,7 +134,6 @@ export function EmployeeHome() {
                                         </p>
                                     </div>
                                 </div>
-                                {/* <button onClick={showModal} className="btn btn-primary float-end mt-2">Mark Attendance</button> */}
                             </div>
                         </div>
                     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import axios from "axios";
 import "../../css/custom.css"
@@ -6,7 +6,8 @@ export function AdminDashboard() {
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
-
+    const [token, setToken] = useState(localStorage.getItem('token') || null);
+    const [employees, setEmployees] = useState([]);
     function handleSubmit(event) {
         event.preventDefault();
         setIsLoading(true);
@@ -26,6 +27,29 @@ export function AdminDashboard() {
             console.log("Error :", error)
         })
     }
+
+    useEffect(() => {
+        axios({
+            url: "http://localhost:8080/admin/allEmployees",
+            method: "GET",
+            headers: {
+                "token": token
+            }
+        }).then((response) => {
+            console.log(response.data.all)
+            if (response.status === 200) {
+                setEmployees(response.data.all);
+                console.log("Here")
+            }
+        }).catch((error) => {
+            console.log("Error :", error)
+            if (error.response.status === 404) {
+                console.log("No employee found")
+            } else if (error.response.status === 500) {
+                console.log("Server error")
+            }
+        })
+    }, [])
     return (
         <>
             <div className="d-flex">
@@ -72,39 +96,58 @@ export function AdminDashboard() {
 
                     {/* Show list of all employees */}
 
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">First</th>
-                                <th scope="col">Last</th>
-                                <th scope="col">Handle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <th scope="row">1</th>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td>@mdo</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>Jacob</td>
-                                <td>Thornton</td>
-                                <td>@fat</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">3</th>
-                                <td colspan="2">Larry the Bird</td>
-                                <td>@twitter</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div className="row">
+                        <div className="col-lg-12">
+                            <div className="card">
+                                <div className="card-body">
+                                    <div className="row mb-2">
+                                
+                                        
+                                        <div className="table-responsive">
+                                            <table className="table align-middle table-nowrap table-hover dt-responsive nowrap w-100" id="userList-table">
+                                                <thead className="table-light">
+                                                    <tr>
+                                                        <th scope="col" style={{ "width": "40px" }}>Sr. No.</th>
+                                                        <th scope="col">Name</th>
+                                                        <th scope="col">Email</th>
+                                                        <th scope="col">Contact number</th>
+                                                        <th scope="col">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {employees.map((employee, index) => {
+                                                        return (
+                                                            <tr key={index}>
+                                                                <td>{index + 1}</td>
+                                                                <td>
+                                                                    <div className="d-flex align-items-center">
+                                                                        <div className="avatar-xs img-fluid rounded-circle me-3">
+                                                                            <img src={employee.profileImg ?? ""} alt="Image " className="member-img img-fluid d-block rounded-circle" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <h5 className="text-truncate font-size-14 mb-1">
+                                                                                <a href="javascript: void(0);" className="text-dark">{employee.firstName + " " + employee.lastName}</a>
+                                                                            </h5>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>{employee.email}</td>
+                                                                <td>{employee.contactNumber}</td>
+                                                                <td>Active</td>
+                                                            </tr>
+                                                        );
+                                                    })}
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-
         </>
     );
 
