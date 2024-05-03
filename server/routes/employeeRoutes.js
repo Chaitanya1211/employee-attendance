@@ -7,6 +7,7 @@ router.post("/register", employee.register);
 router.post("/login", employee.login);
 router.get("/profile", auth, employee.getDetails);
 router.put("/profileUpdate", auth, upload.single('profileImg'), employee.updateProfile);
-router.post("/markLogin", auth, employee.markLogin);
+router.put("/markLogin", auth, employee.markLogin);
 router.put("/markLogout", auth, employee.markLogout);
+router.get("/home", auth, employee.home)
 module.exports = router

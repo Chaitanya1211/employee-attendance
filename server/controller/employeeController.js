@@ -114,14 +114,13 @@ async function markLogin(req,res){
     const email= req.user.email;
     const currentDate= getCurrentDate();
     const currentDateTime = getCurrentDateTime();
-    const attendance = new Attendance({
-        employeeEmail : email,
-        today: currentDate,
-        login : currentDateTime,
-        isLoggedIn :true
-    })
+    const updateFields = {
+        login: currentDateTime,
+        isLoggedIn: true
+    };
+
     try{
-        const result = await attendance.save();
+        const result = await Attendance.updateOne(  { $and :[{employeeEmail: email},{today:currentDate}] }, {$set : updateFields})
         if(result){
             // attendance marked
             res.status(200).json({message: "Attendance marked"})
@@ -137,20 +136,54 @@ async function markLogin(req,res){
 
 async function markLogout(req,res){
     const email= req.user.email;
+    const currentDate= getCurrentDate();
     const currentDateTime = getCurrentDateTime();
     const updateFields = {
         logout: currentDateTime,
         isLoggedOut: true
     };
     try{
-        // const result = await attendance.save();
-        const result = await Attendance.updateOne( {employeeEmail: email }, {$set : updateFields})
+        const result = await Attendance.updateOne(   { $and :[{employeeEmail: email},{today:currentDate}] }, {$set : updateFields})
         if(result.nModified != 0){
-            // attendance marked
             res.status(200).json({message: "Attendance marked. Logged out"})
         }else{
-            // attendance not marked
             res.status(500).json({message : "Attendance not marked. Internal server error"})
+        }
+    }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function home(req,res){
+    const email = req.user.email;
+    const current = getCurrentDate();
+    try{
+        // get the current attendacen and some details
+        const profile = await Employee.findOne({email : email}, "firstName lastName email contactNumber");
+        const todayStatus = await Attendance.findOne({$and:[{employeeEmail : email},{today: current}]});
+        if(profile){
+            if(todayStatus){
+                res.status(200).json({message : "Details found", profile : profile, todayStatus : todayStatus})
+            }else{
+                const currentDate = getCurrentDate();
+                const newToday = new Attendance({
+                employeeEmail : email,
+                today: currentDate,
+                isLoggedIn :false,
+                isLoggedOut : false 
+            });
+
+            const result = await newToday.save();
+
+            if(result){
+                res.status(200).json({message : "Details found", profile : profile, todayStatus : result})
+            }else{
+                res.status(500).json({message : "Could not process request"});
+            }
+            }
+        }else{
+            res.status(404).json({message :"Employee not found"});
         }
     }catch(error){
         console.error('Internal server error', error);
@@ -175,3 +208,4 @@ exports.getDetails = getDetails;
 exports.updateProfile = updateProfile;
 exports.markLogin = markLogin;
 exports.markLogout = markLogout;
+exports.home = home;
