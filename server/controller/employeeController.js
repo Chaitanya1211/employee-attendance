@@ -2,13 +2,13 @@ const Employee = require("../models/employeeModel");
 const Attendance = require("../models/attendanceModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const cloudinary= require('cloudinary').v2;
+const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET
-  });
+});
 
 
 async function register(req, res) {
@@ -84,21 +84,21 @@ async function getDetails(req, res) {
 async function updateProfile(req, res) {
     const email = req.user.email;
     try {
-        let newData = {...req.body};
+        let newData = { ...req.body };
         const profileImg = req.file;
         let publicUrl;
         console.log("profile :", profileImg);
-        if (profileImg) {  
-            publicUrl= await  cloudinary.uploader.upload(profileImg.path)
+        if (profileImg) {
+            publicUrl = await cloudinary.uploader.upload(profileImg.path)
         }
 
         try {
             newData["profileImg"] = publicUrl.secure_url;
             const result = await Employee.updateOne({ email: email }, { $set: newData });
             if (result.matchedCount != 0) {
-                res.status(200).json({message: "Profile Details Updated"})
+                res.status(200).json({ message: "Profile Details Updated" })
             } else {
-                res.status(404).json({message : "Profile details not updated"})
+                res.status(404).json({ message: "Profile details not updated" })
             }
         } catch (e) {
             res.status(500).json({ error: 'Internal server error' });
@@ -109,97 +109,93 @@ async function updateProfile(req, res) {
     }
 }
 
-async function markLogin(req,res){
+async function markLogin(req, res) {
     // const attendance={};
-    const email= req.user.email;
-    const currentDate= getCurrentDate();
+    const email = req.user.email;
+    const currentDate = getCurrentDate();
     const currentDateTime = getCurrentDateTime();
     const updateFields = {
         login: currentDateTime,
         isLoggedIn: true
     };
 
-    try{
-        const result = await Attendance.updateOne(  { $and :[{employeeEmail: email},{today:currentDate}] }, {$set : updateFields})
-        if(result){
+    try {
+        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields },{new:true})
+        if (result) {
             // attendance marked
-            res.status(200).json({message: "Attendance marked"})
-        }else{
+            res.status(200).json({ message: "Attendance marked", todayStatus : result })
+        } else {
             // attendance not marked
-            res.status(500).json({message : "Attendance not marked. Internal server error"})
+            res.status(500).json({ message: "Attendance not marked. Internal server error" })
         }
-    }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 }
 
-async function markLogout(req,res){
-    const email= req.user.email;
-    const currentDate= getCurrentDate();
+async function markLogout(req, res) {
+    const email = req.user.email;
+    const currentDate = getCurrentDate();
     const currentDateTime = getCurrentDateTime();
     const updateFields = {
         logout: currentDateTime,
         isLoggedOut: true
     };
-    try{
-        const result = await Attendance.updateOne(   { $and :[{employeeEmail: email},{today:currentDate}] }, {$set : updateFields})
-        if(result.nModified != 0){
-            res.status(200).json({message: "Attendance marked. Logged out"})
-        }else{
-            res.status(500).json({message : "Attendance not marked. Internal server error"})
+    try {
+        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields },{new:true})
+        if (result.nModified != 0) {
+            res.status(200).json({ message: "Attendance marked. Logged out", todayStatus :result })
+        } else {
+            res.status(500).json({ message: "Attendance not marked. Internal server error" })
         }
-    }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 }
 
-async function home(req,res){
+async function home(req, res) {
     const email = req.user.email;
     const current = getCurrentDate();
-    try{
-        // get the current attendacen and some details
-        const profile = await Employee.findOne({email : email}, "firstName lastName email contactNumber");
-        const todayStatus = await Attendance.findOne({$and:[{employeeEmail : email},{today: current}]});
-        if(profile){
-            if(todayStatus){
-                res.status(200).json({message : "Details found", profile : profile, todayStatus : todayStatus})
-            }else{
-                const currentDate = getCurrentDate();
-                const newToday = new Attendance({
-                employeeEmail : email,
-                today: currentDate,
-                isLoggedIn :false,
-                isLoggedOut : false 
-            });
+    try {
+        const profile = await Employee.findOne({ email: email }, "firstName lastName email contactNumber");
+        let todayStatus = await Attendance.findOne({ $and: [{ employeeEmail: email }, { today: current }] });
 
-            const result = await newToday.save();
-
-            if(result){
-                res.status(200).json({message : "Details found", profile : profile, todayStatus : result})
-            }else{
-                res.status(500).json({message : "Could not process request"});
-            }
-            }
-        }else{
-            res.status(404).json({message :"Employee not found"});
+        if (!profile) {
+            res.status(404).json({ message: "Employee not found" });
+            return;
         }
-    }catch(error){
+
+        if (!todayStatus) {
+            const currentDate = getCurrentDate();
+            const newToday = new Attendance({
+                employeeEmail: email,
+                today: currentDate,
+                isLoggedIn: false,
+                isLoggedOut: false
+            });
+            todayStatus = await newToday.save();
+        }
+
+        res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus });
+
+    } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 }
+
 
 function getCurrentDate() {
     const currentDate = new Date();
-    const isoDate = currentDate.toLocaleDateString('en-US', {timeZone: 'Asia/Kolkata'});
+    const isoDate = currentDate.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
     return isoDate.split('T')[0];
 }
 
-function getCurrentDateTime(){
+function getCurrentDateTime() {
     const currentDate = new Date();
-    return currentDate.toLocaleTimeString('en-US', {timeZone: 'Asia/Kolkata'});
+    return currentDate.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
 }
 
 exports.register = register;
