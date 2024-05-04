@@ -6,4 +6,5 @@ router.post("/login", admin.login);
 router.post("/register", admin.register);
 router.post("/invite/:email", admin.inviteEmployee);
 router.get("/allEmployees",auth, admin.allEmployees);
+router.post("/employee", auth, admin.getSingleEmployee);
 module.exports = router

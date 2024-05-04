@@ -40,8 +40,6 @@ export function GreetingMessage({ name }) {
     }
     return (
         <>
-            {/* <h4>{greeting + " " + name + " !!"}</h4>
-            <p>{quote}</p> */}
             <div class="card">
                 <div class="card-body">
                 <h5 class="card-title">{greeting + " " + name + " !!"}</h5>

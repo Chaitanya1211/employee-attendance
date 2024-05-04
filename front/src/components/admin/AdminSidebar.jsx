@@ -16,27 +16,12 @@ export function AdminSidebar() {
 
                 <li className="nav-item">
                     <NavLink exact to="/admin/dashboard" className="nav-link text-white" activeClassName="active">
-                        Dashboard
-                    </NavLink>
-                </li>
-                
-                <li className="nav-item">
-                    <NavLink to="/admin/orders" className="nav-link text-white" activeClassName="active">
-                        Orders
-                    </NavLink>
-                </li>
-                <li className="nav-item">
-                    <NavLink to="/admin/products" className="nav-link text-white" activeClassName="active">
-                        Products
-                    </NavLink>
-                </li>
-                <li className="nav-item">
-                    <NavLink to="/admin/customers" className="nav-link text-white" activeClassName="active">
-                        Customers
+                        Employees
                     </NavLink>
                 </li>
             </ul>
             <hr />
+            
         </div>
     );
 }

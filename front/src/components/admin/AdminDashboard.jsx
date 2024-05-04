@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import axios from "axios";
-import "../../css/custom.css"
+import "../../css/custom.css";
+import { Link } from 'react-router-dom';
 export function AdminDashboard() {
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -53,58 +54,59 @@ export function AdminDashboard() {
     return (
         <>
             <div className="d-flex">
-                <div className="col-lg-2">
+                <div className="col-lg-2 position-fixed">
                     <AdminSidebar />
                 </div>
-                <div className="col-lg-10 p-5">
-                    <div className="row">
-                        <div className="col-lg-5">
-                            <div className="card" id="emailSend">
-                                <div className="card-body p-4">
-                                    <h5 className="card-title mb-4">Invite Employee</h5>
-                                    <form className="row row-cols-lg-auto g-3 align-items-center justify-content-end" onSubmit={handleSubmit}>
-                                        <input type="text" className="form-control" id="autoSizingInput" placeholder="Email" value={email} onChange={(e) => { setEmail(e.target.value) }} />
+                <div className="col-lg-10" style={{ "marginLeft": "auto" }}>
+                    <div className="col-lg-12 p-5">
+                        <div className="row">
+                            <div className="col-lg-5">
+                                <div className="card" id="emailSend">
+                                    <div className="card-body p-4">
+                                        <h5 className="card-title mb-4">Invite Employee</h5>
+                                        <form className="row row-cols-lg-auto g-3 align-items-center justify-content-end" onSubmit={handleSubmit}>
+                                            <input type="text" className="form-control" id="autoSizingInput" placeholder="Email" value={email} onChange={(e) => { setEmail(e.target.value) }} />
 
-                                        <div className="col-12">
-                                            <button type="submit" className="btn btn-primary w-md">Send Invite</button>
+                                            <div className="col-12">
+                                                <button type="submit" className="btn btn-primary w-md">Send Invite</button>
+                                            </div>
+                                        </form>
+
+                                    </div>
+                                    {isLoading && (
+                                        <div id="loader-wrapper">
+                                            <div className="spinner-border text-primary m-1" role="status"></div>
                                         </div>
-                                    </form>
+                                    )}
 
+                                    {toastMessage && (
+                                        <div className="toast" role="alert" aria-live="assertive" aria-atomic="true" style={{ position: 'fixed', top: '10px', right: '10px' }}>
+                                            <div className="toast-header">
+                                                <strong className="mr-auto">Notification</strong>
+                                                <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onClick={() => setToastMessage('')}>
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div className="toast-body">
+                                                {toastMessage}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                {isLoading && (
-                                    <div id="loader-wrapper">
-                                        <div className="spinner-border text-primary m-1" role="status"></div>
-                                    </div>
-                                )}
-
-                                {toastMessage && (
-                                    <div className="toast" role="alert" aria-live="assertive" aria-atomic="true" style={{ position: 'fixed', top: '10px', right: '10px' }}>
-                                        <div className="toast-header">
-                                            <strong className="mr-auto">Notification</strong>
-                                            <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onClick={() => setToastMessage('')}>
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div className="toast-body">
-                                            {toastMessage}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Show list of all employees */}
+                        {/* Show list of all employees */}
 
-                    <div className="row">
-                        <div className="col-lg-12">
-                            <div className="card">
-                                <div className="card-body">
-                                <div class="row mb-2">
+                        <div className="row">
+                            <div className="col-lg-12">
+                                <div className="card">
+                                    <div className="card-body">
+                                        <div class="row mb-2">
                                             <div class="col-sm-4">
                                                 <div class="search-box me-2 mb-2 d-inline-block">
                                                     <div class="position-relative">
-                                                        <input type="text" class="form-control" id="searchTableList" placeholder="Search..."/>
+                                                        <input type="text" class="form-control" id="searchTableList" placeholder="Search..." />
                                                         <i class="bx bx-search-alt search-icon"></i>
                                                     </div>
                                                 </div>
@@ -115,46 +117,47 @@ export function AdminDashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                    <div className="row mb-2">
-                                
-                                        
-                                        <div className="table-responsive">
-                                            <table className="table align-middle table-nowrap table-hover dt-responsive nowrap w-100" id="userList-table">
-                                                <thead className="table-light">
-                                                    <tr>
-                                                        <th scope="col" style={{ "width": "40px" }}>Sr. No.</th>
-                                                        <th scope="col">Name</th>
-                                                        <th scope="col">Email</th>
-                                                        <th scope="col">Contact number</th>
-                                                        <th scope="col">Status</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {employees.map((employee, index) => {
-                                                        return (
-                                                            <tr key={index}>
-                                                                <td>{index + 1}</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div className="avatar-xs img-fluid rounded-circle me-3">
-                                                                            <img src={employee.profileImg ?? ""} alt="Image " className="member-img img-fluid d-block rounded-circle" />
-                                                                        </div>
-                                                                        <div>
-                                                                            <h5 className="text-truncate font-size-14 mb-1">
-                                                                                <a href="javascript: void(0);" className="text-dark">{employee.firstName + " " + employee.lastName}</a>
-                                                                            </h5>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>{employee.email}</td>
-                                                                <td>{employee.contactNumber}</td>
-                                                                <td>Active</td>
-                                                            </tr>
-                                                        );
-                                                    })}
+                                        <div className="row mb-2">
 
-                                                </tbody>
-                                            </table>
+
+                                            <div className="table-responsive">
+                                                <table className="table align-middle table-nowrap table-hover dt-responsive nowrap w-100" id="userList-table">
+                                                    <thead className="table-light">
+                                                        <tr>
+                                                            <th scope="col" style={{ "width": "40px" }}>Sr. No.</th>
+                                                            <th scope="col">Name</th>
+                                                            <th scope="col">Email</th>
+                                                            <th scope="col">Contact number</th>
+                                                            <th scope="col">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {employees.map((employee, index) => {
+                                                            return (
+                                                                <tr key={index}>
+                                                                    <td>{index + 1}</td>
+                                                                    <td>
+                                                                        <div className="d-flex align-items-center">
+                                                                            <div className="avatar-xs img-fluid rounded-circle me-3">
+                                                                                <img src={employee.profileImg ?? ""} alt="Image " className="member-img img-fluid d-block rounded-circle" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <h5 className="text-truncate font-size-14 mb-1">
+                                                                                    <Link to={`/admin/employee/${employee.email}`} className="text-dark">{employee.firstName + " " + employee.lastName}</Link>
+                                                                                </h5>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>{employee.email}</td>
+                                                                    <td>{employee.contactNumber}</td>
+                                                                    <td><span class="badge bg-success">Active</span></td>
+                                                                </tr>
+                                                            );
+                                                        })}
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

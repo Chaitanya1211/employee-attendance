@@ -9,6 +9,7 @@ import { AdminHome } from './components/admin/AdminHome';
 import { AdminLogin } from './components/admin/AdminLogin';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { EmployeeProfile } from './components/employee/EmployeeProfile';
+import { EmployeeDetails } from './components/admin/EmployeeDetails';
 
 function App() {
 
@@ -24,6 +25,7 @@ function App() {
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path='/admin/home' element={<AdminHome />} />
         <Route path='/admin/dashboard' element={<AdminDashboard />} />
+        <Route path='/admin/employee/:email' element={<EmployeeDetails />} />
          
       </Routes>
     </BrowserRouter>

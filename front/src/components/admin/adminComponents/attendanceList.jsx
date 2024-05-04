@@ -1,4 +1,4 @@
-export function AttendanceList({ attendance }) {
+export function Attendance({attendance}){
     function calculateWorkingHours(loginTime, logoutTime) {
         const loginDateTime = new Date(`${loginTime} ${new Date().getFullYear()}`);
         if (!logoutTime) {
@@ -12,11 +12,9 @@ export function AttendanceList({ attendance }) {
 
     return (
         <>
-            <div className="row">
+        <div className="row">
                 <div className="col-lg-12">
                     <div className="card">
-                        <div className="card-body">
-                            <h4 className="mb-3 text-dark">History</h4>
                             <div className="row mb-2">
                                 <div className="table-responsive">
                                     <table className="table align-middle table-nowrap table-hover dt-responsive nowrap w-100" id="userList-table">
@@ -24,6 +22,7 @@ export function AttendanceList({ attendance }) {
                                             <tr>
                                                 <th scope="col" style={{ "width": "40px" }}>Sr. No.</th>
                                                 <th scope="col">Date</th>
+                                                <th scope="col">Status</th>
                                                 <th scope="col">Login Time</th>
                                                 <th scope="col">Logout Time</th>
                                                 <th scope="col">Working Hours</th>
@@ -44,6 +43,7 @@ export function AttendanceList({ attendance }) {
                                                                 </div>
                                                             </div>
                                                         </td>
+                                                        <td>{att.login ? <span class="badge bg-success">Present</span> : <span class="badge bg-danger">Absent</span>}</td>
                                                         <td>{att.login ?? "-"}</td>
                                                         <td>{att.logout ?? "-"}</td>
                                                         <td>{workingHours}</td>
@@ -55,10 +55,9 @@ export function AttendanceList({ attendance }) {
                                     </table>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </>
-    );
-}
+    )
+} 
