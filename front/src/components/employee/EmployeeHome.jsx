@@ -4,6 +4,7 @@ import { EmployeeSidebar } from "./EmployeeSidebar";
 import SweetAlert from 'react-bootstrap-sweetalert';
 import axios from "axios";
 import { AttendanceList } from "./employeeComponents/AttendanceList";
+import GreetingMessage from "./employeeComponents/EmployeeGreeting";
 export function EmployeeHome() {
     const [loginModal, setLoginModal] = useState(false);
     const [logoutModal, setLogoutModal] = useState(false);
@@ -120,8 +121,9 @@ export function EmployeeHome() {
                     <div className="col-lg-12 p-5">
                         <div className="d-flex justify-content-between">
                             {/* greeting column */}
-                            <div className="col-lg-4">
-                                <h4>Good Afternoon {profile.firstName ?? ''} !!!</h4>
+                            <div className="col-lg-5">
+                                {/* <h4>Good Afternoon {profile.firstName ?? ''} !!!</h4> */}
+                                <GreetingMessage name={profile.firstName ?? ''} />
                             </div>
                             {/* time and mark column */}
                             <div className="col-lg-6">
