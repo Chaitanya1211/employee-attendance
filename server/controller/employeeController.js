@@ -169,8 +169,10 @@ async function home(req, res) {
 
         if (!todayStatus) {
             const currentDate = getCurrentDate();
+            const showDate = getCurrentDateAndDayFormatted();
             const newToday = new Attendance({
                 employeeEmail: email,
+                showDate :showDate,
                 today: currentDate,
                 isLoggedIn: false,
                 isLoggedOut: false
@@ -178,7 +180,12 @@ async function home(req, res) {
             todayStatus = await newToday.save();
         }
 
-        res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus });
+        let attendance= await getAllAttendance(email);
+        if(attendance.length != 0){
+            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus, attendance : attendance });
+        }else{
+            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus });
+        }
 
     } catch (error) {
         console.error('Internal server error', error);
@@ -186,6 +193,18 @@ async function home(req, res) {
     }
 }
 
+async function getAllAttendance(email){
+    try{
+        const result= await Attendance.find({employeeEmail:email}).sort({ today: -1 });
+        if(result){
+            return result;
+        }else{
+            return null;
+        }
+    }catch(error){
+        return null;
+    }
+}
 
 function getCurrentDate() {
     const currentDate = new Date();
@@ -196,6 +215,19 @@ function getCurrentDate() {
 function getCurrentDateTime() {
     const currentDate = new Date();
     return currentDate.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+}
+function getCurrentDateAndDayFormatted() {
+    const currentDate = new Date();
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long',
+        timeZone: 'Asia/Kolkata'
+    };
+    const formattedDate = new Intl.DateTimeFormat('en-US',options).format(currentDate);
+    const formattedDateWithoutOrdinal = formattedDate.replace(/(\d{1,2})(th|st|nd|rd)/, '$1');
+    return formattedDateWithoutOrdinal;
 }
 
 exports.register = register;

@@ -3,6 +3,7 @@ import { TimeCard } from "../../helper/timeCard";
 import { EmployeeSidebar } from "./EmployeeSidebar";
 import SweetAlert from 'react-bootstrap-sweetalert';
 import axios from "axios";
+import { AttendanceList } from "./employeeComponents/AttendanceList";
 export function EmployeeHome() {
     const [loginModal, setLoginModal] = useState(false);
     const [logoutModal, setLogoutModal] = useState(false);
@@ -10,6 +11,7 @@ export function EmployeeHome() {
     const [home, setHome] = useState([]);
     const [profile, setProfile] = useState([]);
     const [todayStatus, setTodayStatus] = useState([]);
+    const [attendance, setAttendance] = useState([]);
     useEffect(() => {
         axios({
             url: "http://localhost:8080/employee/home",
@@ -24,6 +26,7 @@ export function EmployeeHome() {
                 setHome(response.data);
                 setProfile(response?.data?.profile);
                 setTodayStatus(response.data.todayStatus);
+                setAttendance(response.data.attendance);
             }
         }).catch((error) => {
             console.log("Error :", error);
@@ -34,27 +37,28 @@ export function EmployeeHome() {
             }
         })
     }, []);
-    
+
     const showLoginModal = () => {
         setLoginModal(true);
     }
     const markLogin = () => {
         // make request for login
         axios({
-            url : "http://localhost:8080/employee/markLogin",
-            method :"PUT",
-            headers:{
-                "Content-Type":"application/json",
-                "token" : token
+            url: "http://localhost:8080/employee/markLogin",
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "token": token
             }
-        }).then((response)=>{
+        }).then((response) => {
             console.log(response);
-            if(response.status === 200){
+            if (response.status === 200) {
                 setTodayStatus(response.data.todayStatus);
+                setAttendance(response.data.attendance);
             }
-        }).catch((error)=>{
+        }).catch((error) => {
             console.log("Error : ", error);
-            if(error.response && error.response.status === 500){
+            if (error.response && error.response.status === 500) {
                 console.log("Internal server error")
             }
         })
@@ -62,35 +66,37 @@ export function EmployeeHome() {
     };
 
 
-    const showLogoutModal = () =>{
-      setLogoutModal(true);
+    const showLogoutModal = () => {
+        setLogoutModal(true);
     }
 
-    const markLogout = () =>{
+    const markLogout = () => {
         axios({
-            url : "http://localhost:8080/employee/markLogout",
-            method :"PUT",
-            headers:{
-                "Content-Type":"application/json",
-                "token" : token
+            url: "http://localhost:8080/employee/markLogout",
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "token": token
             }
-        }).then((response)=>{
+        }).then((response) => {
             console.log(response);
-            if(response.status === 200){
+            if (response.status === 200) {
                 setTodayStatus(response.data.todayStatus);
+                setAttendance(response.data.attendance);
             }
-        }).catch((error)=>{
+        }).catch((error) => {
             console.log("Error : ", error);
-            if(error.response && error.response.status === 500){
+            if (error.response && error.response.status === 500) {
                 console.log("Internal server error")
             }
         })
         setLogoutModal(false)
     }
+
     return (
         <>
             <SweetAlert
-                title={"Hello" +" "+profile.firstName}
+                title={"Hello" + " " + profile.firstName}
                 onConfirm={markLogin}
                 show={loginModal}>
                 Hello {profile.firstName + profile.lastName}
@@ -98,7 +104,7 @@ export function EmployeeHome() {
             </SweetAlert>
 
             <SweetAlert
-                title={"Hello" +" "+profile.firstName}
+                title={"Hello" + " " + profile.firstName}
                 onConfirm={markLogout}
                 show={logoutModal}>
                 Hello {profile.firstName + profile.lastName}
@@ -107,7 +113,7 @@ export function EmployeeHome() {
 
             <div className="d-flex">
                 <div className="col-lg-2 position-fixed">
-                    <EmployeeSidebar name={`${profile.firstName ?? ''} ${profile.lastName ?? ''}`}/>
+                    <EmployeeSidebar name={`${profile.firstName ?? ''} ${profile.lastName ?? ''}`} />
                 </div>
 
                 <div className="col-lg-10" style={{ "marginLeft": "auto" }}>
@@ -118,24 +124,32 @@ export function EmployeeHome() {
                                 <h4>Good Afternoon {profile.firstName ?? ''} !!!</h4>
                             </div>
                             {/* time and mark column */}
-                            <div className="col-lg-3">
-                                <TimeCard />
-                                <div className="d-flex mt-3">
-                                    <div className="col-lg-6 text-center">
-                                        <button className="btn btn-success" disabled={todayStatus.isLoggedIn} onClick={showLoginModal} >Login</button>
-                                        <p className="mt-1">
-                                            <b>{todayStatus.isLoggedIn ? todayStatus.login : ""}</b>
-                                        </p>
+                            <div className="col-lg-6">
+                                <div className="d-flex">
+                                    <div className="col-lg-6">
+                                        <div className="d-flex mt-3">
+                                            <div className="col-lg-6 text-center">
+                                                <button className="btn btn-success" disabled={todayStatus.isLoggedIn} onClick={showLoginModal} >Login</button>
+                                                <p className="mt-1">
+                                                    <b>{todayStatus.isLoggedIn ? todayStatus.login : ""}</b>
+                                                </p>
+                                            </div>
+                                            <div className="col-lg-6 text-center">
+                                                <button className="btn btn-danger" disabled={todayStatus.isLoggedIn ? (todayStatus.isLoggedOut ? true : false) : true} onClick={showLogoutModal}>Logout</button>
+                                                <p className="mt-1">
+                                                    <b>{todayStatus.isLoggedOut ? todayStatus.logout : ""}</b>
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="col-lg-6 text-center">
-                                        <button className="btn btn-danger" disabled={todayStatus.isLoggedIn ? (todayStatus.isLoggedOut ? true : false) : true} onClick={showLogoutModal}>Logout</button>
-                                        <p className="mt-1">
-                                            <b>{todayStatus.isLoggedOut ? todayStatus.logout : ""}</b>
-                                        </p>
+                                    <div className="col-lg-6">
+                                        <TimeCard />
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        <AttendanceList attendance={attendance} />
+
                     </div>
                 </div>
             </div>

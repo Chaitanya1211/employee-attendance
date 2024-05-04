@@ -100,6 +100,21 @@ export function AdminDashboard() {
                         <div className="col-lg-12">
                             <div className="card">
                                 <div className="card-body">
+                                <div class="row mb-2">
+                                            <div class="col-sm-4">
+                                                <div class="search-box me-2 mb-2 d-inline-block">
+                                                    <div class="position-relative">
+                                                        <input type="text" class="form-control" id="searchTableList" placeholder="Search..."/>
+                                                        <i class="bx bx-search-alt search-icon"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <div class="text-sm-end">
+                                                    <button type="button" data-bs-toggle="modal" data-bs-target="#newContactModal" class="btn btn-success btn-rounded waves-effect waves-light addContact-modal mb-2"><i class="mdi mdi-plus me-1"></i> New Contact</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     <div className="row mb-2">
                                 
                                         

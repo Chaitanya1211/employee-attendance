@@ -5,6 +5,9 @@ const attendanceSchema = mongoose.Schema({
         type : String,
         required : true
     },
+    showDate:{
+        type :String
+    },
     today:{
         type :String,
         required : true

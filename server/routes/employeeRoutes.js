@@ -9,5 +9,6 @@ router.get("/profile", auth, employee.getDetails);
 router.put("/profileUpdate", auth, upload.single('profileImg'), employee.updateProfile);
 router.put("/markLogin", auth, employee.markLogin);
 router.put("/markLogout", auth, employee.markLogout);
-router.get("/home", auth, employee.home)
+router.get("/home", auth, employee.home);
+router.get("/attendances", auth);
 module.exports = router
