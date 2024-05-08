@@ -61,16 +61,16 @@ async function login(req, res) {
 }
 
 async function inviteEmployee(req,res){
-    const email = req.params["email"];
-    console.log(email);
-    const encryptedEmail = Buffer.from(email).toString('base64');
-    console.log(encryptedEmail);
+    const {email} = req.body;
+    let inviteData =req.body;
+    const encryptedData = Buffer.from(JSON.stringify(inviteData)).toString('base64');;
+    
     var mailOptions = {
         from: process.env.EMAIL,
         to: email,
         subject: 'Sending Email using Node.js',
         text: 'Register to platform',
-        html : emailTemplate(encryptedEmail)
+        html : emailTemplate(encryptedData)
       };
 
       transporter.sendMail(mailOptions, function(error, info){

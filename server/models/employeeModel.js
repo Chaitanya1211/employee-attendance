@@ -12,6 +12,11 @@ const employeeSchema = mongoose.Schema({
         type:String,
         required :true
     },
+    "role":{
+        type:String,
+        enum:['developer','tester','intern'],
+        required:true
+    },
     "profileImg":{
         type :String,
         default : null

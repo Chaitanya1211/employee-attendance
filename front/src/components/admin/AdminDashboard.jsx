@@ -1,33 +1,42 @@
 import { useEffect, useState } from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import axios from "axios";
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useForm } from "react-hook-form";
 import "../../css/custom.css";
 import { Link } from 'react-router-dom';
+import inviteSchema from "../../helper/inviteValidator";
 export function AdminDashboard() {
-    const [email, setEmail] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [toastMessage, setToastMessage] = useState('');
+    const [toastMessage, setToastMessage] = useState(false);
     const [token, setToken] = useState(localStorage.getItem('token') || null);
     const [employees, setEmployees] = useState([]);
-    function handleSubmit(event) {
-        event.preventDefault();
-        setIsLoading(true);
+    const { register, handleSubmit, formState: { errors } } = useForm({
+        resolver: yupResolver(inviteSchema)
+    });
+    const [disableBtn, setDisableBtn] = useState(false);
+    const onFormSubmit = (data) => {
+        console.log(data);
+        setDisableBtn(true);
         axios({
-            url: `http://localhost:8080/admin/invite/${email}`,
+            url: `http://localhost:8080/admin/invite`,
             method: "POST",
             headers: {
-                "Content-Type": 'application/json'
-            }
+                "Content-Type": 'application/json',
+                "token": token
+            },
+            data: data
         }).then((response) => {
             console.log(response.data)
-            setIsLoading(false);
-            setTimeout(() => {
-                setToastMessage('Email Sent Successfully');
-            }, 2000);
+            setToastMessage(true)
+            setDisableBtn(false);
         }).catch((error) => {
+            setDisableBtn(false);
             console.log("Error :", error)
         })
-    }
+    };
+
+
+    const onErrors = errors => console.error(errors);
 
     useEffect(() => {
         axios({
@@ -59,39 +68,42 @@ export function AdminDashboard() {
                 </div>
                 <div className="col-lg-10" style={{ "marginLeft": "auto" }}>
                     <div className="col-lg-12 p-5">
-                        <div className="row">
-                            <div className="col-lg-5">
-                                <div className="card" id="emailSend">
-                                    <div className="card-body p-4">
-                                        <h5 className="card-title mb-4">Invite Employee</h5>
-                                        <form className="row row-cols-lg-auto g-3 align-items-center justify-content-end" onSubmit={handleSubmit}>
-                                            <input type="text" className="form-control" id="autoSizingInput" placeholder="Email" value={email} onChange={(e) => { setEmail(e.target.value) }} />
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-4">Invite</h5>
 
-                                            <div className="col-12">
-                                                <button type="submit" className="btn btn-primary w-md">Send Invite</button>
+                                        <form class="row gy-2 gx-3 align-items-center" onSubmit={handleSubmit(onFormSubmit, onErrors)}>
+                                            <div class="col-lg-4">
+                                            <label htmlFor="formrow-name-input" className="form-label">Email<span class="text-danger"> *</span></label>
+                                                <input type="email" class="form-control" id="autoSizingInput" placeholder="Enter Email ID" {...register('email')} />
+                                                <small className="text-danger">
+                                                    {errors?.email && errors.email.message}
+                                                </small>
+                                                {toastMessage && 
+                                                <small className="text-success">
+                                                    Invite sent successfully
+                                                </small>
+                                                }
+                                            </div>
+                                            <div class="col-lg-3">
+                                            <label htmlFor="formrow-name-input" className="form-label">Select Role<span class="text-danger"> *</span></label>
+                                                <select class="form-select" id="autoSizingSelect" {...register('role')}>
+                                                    <option value="">Select role</option>
+                                                    <option value="developer">Developer</option>
+                                                    <option value="tester">Tester / QA</option>
+                                                    <option value="intern">Intern</option>
+                                                </select>
+                                                <small className="text-danger">
+                                                    {errors?.role && errors.role.message}
+                                                </small>
+                                            </div>
+                                            <div class="col-lg-2 align-self-end">
+                                                <button type="submit" class="btn btn-primary w-md " disabled={disableBtn}>Invite</button>
                                             </div>
                                         </form>
-
                                     </div>
-                                    {isLoading && (
-                                        <div id="loader-wrapper">
-                                            <div className="spinner-border text-primary m-1" role="status"></div>
-                                        </div>
-                                    )}
-
-                                    {toastMessage && (
-                                        <div className="toast" role="alert" aria-live="assertive" aria-atomic="true" style={{ position: 'fixed', top: '10px', right: '10px' }}>
-                                            <div className="toast-header">
-                                                <strong className="mr-auto">Notification</strong>
-                                                <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onClick={() => setToastMessage('')}>
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button>
-                                            </div>
-                                            <div className="toast-body">
-                                                {toastMessage}
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -111,15 +123,8 @@ export function AdminDashboard() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-8">
-                                                <div class="text-sm-end">
-                                                    <button type="button" data-bs-toggle="modal" data-bs-target="#newContactModal" class="btn btn-success btn-rounded waves-effect waves-light addContact-modal mb-2"><i class="mdi mdi-plus me-1"></i> New Contact</button>
-                                                </div>
-                                            </div>
                                         </div>
                                         <div className="row mb-2">
-
-
                                             <div className="table-responsive">
                                                 <table className="table align-middle table-nowrap table-hover dt-responsive nowrap w-100" id="userList-table">
                                                     <thead className="table-light">

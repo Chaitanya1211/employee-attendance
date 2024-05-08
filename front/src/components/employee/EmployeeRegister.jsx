@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SweetAlert from 'react-bootstrap-sweetalert';
 import { useParams } from 'react-router-dom';
 import { Base64 } from "js-base64";
@@ -8,20 +8,22 @@ import registerSchema from '../../helper/registerValidator';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Loader } from "../../helper/loader";
 export function EmployeeRegister() {
-    const { urlEmail } = useParams();
-    console.log(urlEmail);
-    const email = Base64.decode(urlEmail);
 
     const { register, handleSubmit, formState: { errors } } = useForm({
         resolver: yupResolver(registerSchema)
     });
-
+    
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
     const [showWarningAlert, setShowWarningAlert] = useState(false);
     const [showErrorAlert, setShowErrorAlert] = useState(false);
-
+    
     const [loader, setLoader] = useState(false);
-
+    
+    const { inviteData } = useParams();
+    console.log(inviteData);
+    const inviteObject =JSON.parse( Base64.decode(inviteData));
+    const email = inviteObject.email;
+    const role =inviteObject.role;
     const onConfirm = () => {
         window.location.replace("http://localhost:5173/login")
     };
@@ -105,6 +107,9 @@ export function EmployeeRegister() {
                                 <p className="m-0">
                                     Welcome to CodebergIT ! We are excited to have you join our team. Please take a few moments to complete the registration form below to finalize your account.
                                 </p>
+                                <p className="m-0 mt-2">
+                                    You have been invited for the role of <b>{role}</b>
+                                </p>
                             </div>
                             <form onSubmit={handleSubmit(onFormSubmit, onErrors)}>
                                 <div className="border-bottom py-3">
@@ -167,6 +172,12 @@ export function EmployeeRegister() {
                                                 {errors?.gender && errors.gender.message}
                                             </small>
                                         </div>
+                                        <div className="col-md-4">
+                                        <div className="mb-3">
+                                                <label htmlFor="formrow-email-input" className="form-label">Role<span class="text-danger"> *</span></label>
+                                                <input type="email" className="form-control" id="formrow-email-input" placeholder="Enter Your Email ID" value={role} readOnly disabled {...register('role')} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -228,7 +239,7 @@ export function EmployeeRegister() {
                                                     <option value="KA">Karnataka</option>
                                                     <option value="KL">Kerala</option>
                                                     <option value="MP">Madhya Pradesh</option>
-                                                    <option value="MH">Maharashtra</option>
+                                                    <option value="MH" selected>Maharashtra</option>
                                                     <option value="MN">Manipur</option>
                                                     <option value="ML">Meghalaya</option>
                                                     <option value="MZ">Mizoram</option>

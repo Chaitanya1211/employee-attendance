@@ -55,7 +55,7 @@ export function EmployeeHome() {
             console.log(response);
             if (response.status === 200) {
                 setTodayStatus(response.data.todayStatus);
-                // setAttendance(response.data.attendance);
+                setAttendance(response.data.attendance);
             }
         }).catch((error) => {
             console.log("Error : ", error);
@@ -65,7 +65,6 @@ export function EmployeeHome() {
         })
         setLoginModal(false)
     };
-
 
     const showLogoutModal = () => {
         setLogoutModal(true);
@@ -83,7 +82,7 @@ export function EmployeeHome() {
             console.log(response);
             if (response.status === 200) {
                 setTodayStatus(response.data.todayStatus);
-                // setAttendance(response.data.attendance);
+                setAttendance(response.data.attendance);
             }
         }).catch((error) => {
             console.log("Error : ", error);
