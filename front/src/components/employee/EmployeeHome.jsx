@@ -42,6 +42,10 @@ export function EmployeeHome() {
     const showLoginModal = () => {
         setLoginModal(true);
     }
+
+    const hideLoginModal = () =>{
+        setLoginModal(false);
+    }
     const markLogin = () => {
         // make request for login
         axios({
@@ -68,6 +72,9 @@ export function EmployeeHome() {
 
     const showLogoutModal = () => {
         setLogoutModal(true);
+    }
+    const hideLogoutModal = () => {
+        setLogoutModal(false);
     }
 
     const markLogout = () => {
@@ -96,20 +103,54 @@ export function EmployeeHome() {
     return (
         <>
             <SweetAlert
-                title={"Hello" + " " + profile.firstName}
+                custom
+                showCancel
+                show={loginModal}
+                confirmBtnText="Login"
+                cancelBtnText="Cancel"
+                confirmBtnBsStyle="success"
+                cancelBtnBsStyle="light"
                 onConfirm={markLogin}
-                show={loginModal}>
-                Hello {profile.firstName + profile.lastName}
-                <p>Mark Login</p>
+                onCancel={hideLoginModal}
+            >
+               <div class="card">
+                    <div class="card-body">
+                        <div class="text-center">
+                            <img src={profile.profileImg ?? ''} alt="Profile.png" height="150" class="mx-auto d-block rounded-circle" />
+                            <h5 class="mt-3 mb-1">{profile.firstName + " "}
+                                {profile.middleName && profile.middleName + " "}
+                                {profile.lastName}</h5>
+                            <p class="text-muted fs-14 mb-0"> <b>{profile.role ?? "Not assigned"}</b></p>
+                            <p class="text-muted fs-14 mb-0">{profile.email}</p>
+                        </div>
+                    </div>
+                </div>
+            </SweetAlert>
+            <SweetAlert
+                custom
+                showCancel
+                show={logoutModal}
+                confirmBtnText="Logout"
+                cancelBtnText="Cancel"
+                confirmBtnBsStyle="danger"
+                cancelBtnBsStyle="light"
+                onConfirm={markLogout}
+                onCancel={hideLogoutModal}
+            >
+               <div class="card">
+                    <div class="card-body">
+                        <div class="text-center">
+                            <img src={profile.profileImg ?? ''} alt="Profile.png" height="150" class="mx-auto d-block rounded-circle" />
+                            <h5 class="mt-3 mb-1">{profile.firstName + " "}
+                                {profile.middleName && profile.middleName + " "}
+                                {profile.lastName}</h5>
+                            <p class="text-muted fs-14 mb-0"> <b>{profile.role ?? "Not assigned"}</b></p>
+                            <p class="text-muted fs-14 mb-0">{profile.email}</p>
+                        </div>
+                    </div>
+                </div>
             </SweetAlert>
 
-            <SweetAlert
-                title={"Hello" + " " + profile.firstName}
-                onConfirm={markLogout}
-                show={logoutModal}>
-                Hello {profile.firstName + profile.lastName}
-                <p>Mark Logout</p>
-            </SweetAlert>
 
             <div className="d-flex">
                 <div className="col-lg-2 position-fixed">
@@ -121,7 +162,6 @@ export function EmployeeHome() {
                         <div className="d-flex justify-content-between">
                             {/* greeting column */}
                             <div className="col-lg-5">
-                                {/* <h4>Good Afternoon {profile.firstName ?? ''} !!!</h4> */}
                                 <GreetingMessage name={profile.firstName ?? ''} />
                             </div>
                             {/* time and mark column */}

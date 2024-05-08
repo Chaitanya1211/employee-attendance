@@ -168,7 +168,7 @@ async function home(req, res) {
     const email = req.user.email;
     const current = getCurrentDate();
     try {
-        const profile = await Employee.findOne({ email: email }, "firstName lastName email contactNumber");
+        const profile = await Employee.findOne({ email: email }, "firstName lastName email contactNumber profileImg");
         let todayStatus = await Attendance.findOne({ $and: [{ employeeEmail: email }, { today: current }] });
 
         if (!profile) {
