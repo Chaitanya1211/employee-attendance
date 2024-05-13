@@ -35,8 +35,7 @@ export function EmployeeRegister() {
 
     const onFormSubmit = (data) => {
         setLoader(true);
-        const registerBody = { ...data, email: email };
-        console.log(registerBody);
+        const registerBody = { ...data, email: email, role:role };
         axios({
             url: "http://localhost:8080/employee/register",
             method: "POST",

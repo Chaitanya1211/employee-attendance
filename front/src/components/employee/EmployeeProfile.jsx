@@ -148,10 +148,11 @@ export function EmployeeProfile() {
                                     <div className="col-md-3 border-right">
                                         <div className="d-flex flex-column align-items-center text-center p-3 py-5">
                                             <div className="image-parent">
-                                                {imageLoader && <p>Loading...</p>}
+                                                {/* {imageLoader && <p>Loading...</p>} */}
                                                 <img className="rounded-circle mt-5" width="150px"
-                                                    src={employee.profileImg || '../../assets/no-profile.png'}
+                                                    src={employee.profileImg ?? '../../assets/no-profile.png'}
                                                     onLoad={handleLoad}
+                                                    alt="Profile I"
                                                 />
                                                 <button onClick={() => fileInputRef.current.click()} type="button" className="edit-btn px-2 py-1"><i class="fa-solid fa-pen"></i></button>
                                                 <input onChange={handleChange} multiple={false} ref={fileInputRef} type='file' hidden accept="image/*" />

@@ -17,6 +17,7 @@ export function AdminDashboard() {
     const onFormSubmit = (data) => {
         console.log(data);
         setDisableBtn(true);
+        
         axios({
             url: `http://localhost:8080/admin/invite`,
             method: "POST",
@@ -173,5 +174,4 @@ export function AdminDashboard() {
             </div>
         </>
     );
-
 } 
