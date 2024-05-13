@@ -7,9 +7,11 @@ import {EmployeeHome} from "./components/employee/EmployeeHome";
 import { EmployeeRegister } from './components/employee/EmployeeRegister';
 import { AdminHome } from './components/admin/AdminHome';
 import { AdminLogin } from './components/admin/AdminLogin';
-import { AdminDashboard } from './components/admin/AdminDashboard';
+import { AdminEmployee } from './components/admin/AdminEmployee';
 import { EmployeeProfile } from './components/employee/EmployeeProfile';
 import { EmployeeDetails } from './components/admin/EmployeeDetails';
+import { AdminProjects } from './components/admin/AdminProjects';
+import { NewProject } from './components/admin/NewProject';
 
 function App() {
 
@@ -17,15 +19,18 @@ function App() {
     <>
     <BrowserRouter>
       <Routes>
+        {/* Employee Routes */}
         <Route path='/login' element={<EmployeeLogin />}/>
         <Route path='/home' element={<EmployeeHome />} />
         <Route path='/profile' element={<EmployeeProfile />} />
-        <Route path='/register/:inviteData' element={<EmployeeRegister />} />
         {/* Admin Routes */}
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path='/admin/home' element={<AdminHome />} />
-        <Route path='/admin/dashboard' element={<AdminDashboard />} />
+        <Route path='/admin/dashboard' element={<AdminEmployee />} />
+        <Route path='/register/:inviteData' element={<EmployeeRegister />} />
         <Route path='/admin/employee/:email' element={<EmployeeDetails />} />
+        <Route path='/admin/projects' element={<AdminProjects />} />
+        <Route path='/admin/newproject' element={<NewProject />} />
          
       </Routes>
     </BrowserRouter>

@@ -1,10 +1,17 @@
 const Admin = require("../models/adminModel");
 const Employee = require("../models/employeeModel");
+const Attendance = require("../models/attendanceModel");
+const Project = require("../models/projectModel");
 const bcrypt = require("bcrypt")
 const nodemailer = require("nodemailer");
 const dotenv = require('dotenv');
 const jwt = require("jsonwebtoken");
-const Attendance = require("../models/attendanceModel");
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET
+});
 dotenv.config();
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -15,102 +22,102 @@ const transporter = nodemailer.createTransport({
 });
 
 async function register(req, res) {
-    const { email, password } = req.body;
-    try {
-        const result = await Admin.findOne({ email: email })
-        if (result) {
-            res.status(409).json({ message: "Employee Already exists" })
-        } else {
-            const password_hash = await bcrypt.hash(password, 10);
-            const createdAdmin = await Admin.create({ ...req.body, password_hash: password_hash });
-            res.status(201).json({ message: 'Admin created successfully', admin: createdAdmin });
-        }
-    } catch (error) {
-        console.error('Error creating admin:', error);
-        res.status(500).json({ error: 'Internal server error' });
+  const { email, password } = req.body;
+  try {
+    const result = await Admin.findOne({ email: email })
+    if (result) {
+      res.status(409).json({ message: "Employee Already exists" })
+    } else {
+      const password_hash = await bcrypt.hash(password, 10);
+      const createdAdmin = await Admin.create({ ...req.body, password_hash: password_hash });
+      res.status(201).json({ message: 'Admin created successfully', admin: createdAdmin });
     }
+  } catch (error) {
+    console.error('Error creating admin:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 async function login(req, res) {
   const { email, password } = req.body;
   try {
-      const admin = await Admin.findOne({email:email});
-      if(admin){
-          // check for password
-          const passwordFlag = await admin.matchPassword(password);
-          if(passwordFlag){
-              // success
-              const payload = {
-                  id:admin._id,
-                  email:admin.email
-              }
-              const token = jwt.sign(payload,process.env.SECRET_KEY);
-              console.log("Login success");
-              res.status(200).json({message:"success", token : token})
-          }else{
-              // incorrect password
-              res.status(401).json({message:"failure"})
-          }
-      }else{
-          res.status(404).json({message:'Admin not found'});
-      }
-  } catch(error) {
-      console.error('Internal server error', error);
-      res.status(500).json({ error: 'Internal server error' });
-  }
-}
-
-async function inviteEmployee(req,res){
-    const {email} = req.body;
-    let inviteData =req.body;
-    const encryptedData = Buffer.from(JSON.stringify(inviteData)).toString('base64');;
-    
-    var mailOptions = {
-        from: process.env.EMAIL,
-        to: email,
-        subject: 'Sending Email using Node.js',
-        text: 'Register to platform',
-        html : emailTemplate(encryptedData)
-      };
-
-      transporter.sendMail(mailOptions, function(error, info){
-        if (error) {
-          console.error('Internal server error', error);
-          res.status(500).json({ error: 'Internal server error. Could not sent mail' });
-        } else {
-          res.status(200).json({message : "success", info : info})
+    const admin = await Admin.findOne({ email: email });
+    if (admin) {
+      // check for password
+      const passwordFlag = await admin.matchPassword(password);
+      if (passwordFlag) {
+        // success
+        const payload = {
+          id: admin._id,
+          email: admin.email
         }
-      })
-}
-
-async function allEmployees(req,res){
-  try{
-    const employees = await Employee.find({}, "firstName lastName email contactNumber profileImg");
-    if(employees){
-      res.status(200).json({all:employees});
-    }else{
-      res.status(404).json({message : "No employees found"})
+        const token = jwt.sign(payload, process.env.SECRET_KEY);
+        console.log("Login success");
+        res.status(200).json({ message: "success", token: token })
+      } else {
+        // incorrect password
+        res.status(401).json({ message: "failure" })
+      }
+    } else {
+      res.status(404).json({ message: 'Admin not found' });
     }
-  }catch(error){
+  } catch (error) {
     console.error('Internal server error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
 
-async function getSingleEmployee(req,res){
-  const {employee} = req.body;
+async function inviteEmployee(req, res) {
+  const { email } = req.body;
+  let inviteData = req.body;
+  const encryptedData = Buffer.from(JSON.stringify(inviteData)).toString('base64');;
+
+  var mailOptions = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: 'Sending Email using Node.js',
+    text: 'Register to platform',
+    html: emailTemplate(encryptedData)
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.error('Internal server error', error);
+      res.status(500).json({ error: 'Internal server error. Could not sent mail' });
+    } else {
+      res.status(200).json({ message: "success", info: info })
+    }
+  })
+}
+
+async function allEmployees(req, res) {
+  try {
+    const employees = await Employee.find({}, "firstName lastName email contactNumber profileImg");
+    if (employees) {
+      res.status(200).json({ all: employees });
+    } else {
+      res.status(404).json({ message: "No employees found" })
+    }
+  } catch (error) {
+    console.error('Internal server error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function getSingleEmployee(req, res) {
+  const { employee } = req.body;
   console.log("request made")
-  try{
+  try {
     // get employee profile
-    const profile = await Employee.findOne({email : employee});
-    if(profile){
-      const attendance = await Attendance.find({employeeEmail : employee}).sort({today : -1});
-      res.status(200).json({message:"Employee Found", profile : profile, attendance:attendance});
-    }else{
-      res.status(404).json({message : "Employee Not found"});
+    const profile = await Employee.findOne({ email: employee });
+    if (profile) {
+      const attendance = await Attendance.find({ employeeEmail: employee }).sort({ today: -1 });
+      res.status(200).json({ message: "Employee Found", profile: profile, attendance: attendance });
+    } else {
+      res.status(404).json({ message: "Employee Not found" });
     }
 
-  }catch(error){
+  } catch (error) {
     console.error('Internal server error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -118,7 +125,27 @@ async function getSingleEmployee(req,res){
 
 }
 
-function emailTemplate(encryptedEmail){
+async function createNewProject(req, res) {
+  try {
+    let projectImg = req.file;
+    let publicUrl;
+    if (projectImg) {
+      publicUrl = await cloudinary.uploader.upload(projectImg.path)
+    }
+    const projectId = generateRandomFourDigitNumber();
+    const newProject = await Project.create({ ...req.body, projectId: projectId, projectImage: publicUrl.secure_url });
+    if (newProject) {
+      console.log("New project created");
+      res.status(201).json({ message: 'Project created successfully', project: newProject });
+    } else {
+      res.status(500).json({ error: 'Internal server error', message: "Project could notbe created" });
+    }
+  } catch (error) {
+    console.error('Internal server error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+function emailTemplate(encryptedEmail) {
   return `<div class="row">
   <div class="col-12">
       <table class="body-wrap" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; background-color: transparent; margin: 0;">
@@ -171,9 +198,13 @@ function emailTemplate(encryptedEmail){
   </div>
 </div>`;
 }
+function generateRandomFourDigitNumber() {
+  return Math.floor(1000 + Math.random() * 9000);
+}
 
 exports.register = register;
-exports.login=login;
+exports.login = login;
 exports.inviteEmployee = inviteEmployee;
 exports.allEmployees = allEmployees;
 exports.getSingleEmployee = getSingleEmployee;
+exports.createNewProject = createNewProject;

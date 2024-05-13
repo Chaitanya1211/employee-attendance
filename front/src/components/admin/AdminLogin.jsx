@@ -23,13 +23,6 @@ export function AdminLogin() {
                 }
         }).then((response) =>{
             console.log(response.data);
-            // if(response.data.message == "success"){
-            //     localStorage.setItem("token", response.data.token)
-            //     console.log("Success navigate");
-            //     navigateTo("/admin/home")
-            // }else{
-            //     // failure
-            // }
             if(response.status === 200){
                 localStorage.setItem("token", response.data.token);
                 window.location.replace("http://localhost:5173/admin/home")

@@ -19,6 +19,11 @@ export function AdminSidebar() {
                         Employees
                     </NavLink>
                 </li>
+                <li className="nav-item">
+                    <NavLink exact to="/admin/projects" className="nav-link text-white" activeClassName="active">
+                        Projects
+                    </NavLink>
+                </li>
             </ul>
             <hr />
             

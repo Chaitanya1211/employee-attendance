@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import "../../css/custom.css";
 import { Link } from 'react-router-dom';
 import inviteSchema from "../../helper/inviteValidator";
-export function AdminDashboard() {
+export function AdminEmployee() {
     const [toastMessage, setToastMessage] = useState(false);
     const [token, setToken] = useState(localStorage.getItem('token') || null);
     const [employees, setEmployees] = useState([]);
@@ -92,9 +92,9 @@ export function AdminDashboard() {
                                             <label htmlFor="formrow-name-input" className="form-label">Select Role<span class="text-danger"> *</span></label>
                                                 <select class="form-select" id="autoSizingSelect" {...register('role')}>
                                                     <option value="">Select role</option>
-                                                    <option value="developer">Developer</option>
-                                                    <option value="tester">Tester / QA</option>
-                                                    <option value="intern">Intern</option>
+                                                    <option value="Developer">Developer</option>
+                                                    <option value="Tester">Tester / QA</option>
+                                                    <option value="Intern">Intern</option>
                                                 </select>
                                                 <small className="text-danger">
                                                     {errors?.role && errors.role.message}

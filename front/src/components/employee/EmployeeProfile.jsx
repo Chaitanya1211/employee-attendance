@@ -143,10 +143,10 @@ export function EmployeeProfile() {
                 <div className="col-lg-10" style={{ "margin-left": "auto" }}>
                     <form onSubmit={handleSubmit(onFormSubmit, onErrors)}>
                         <div className="col-lg-12 p-5">
-                            <div className="container rounded bg-white">
+                            <div className="container rounded bg-white p-4">
                                 <div className="row">
                                     <div className="col-md-3 border-right">
-                                        <div className="d-flex flex-column align-items-center text-center p-3 py-5">
+                                        <div className="d-flex flex-column align-items-center text-center p-3 py-4">
                                             <div className="image-parent">
                                                 {/* {imageLoader && <p>Loading...</p>} */}
                                                 <img className="rounded-circle mt-5" width="150px"
@@ -157,7 +157,8 @@ export function EmployeeProfile() {
                                                 <button onClick={() => fileInputRef.current.click()} type="button" className="edit-btn px-2 py-1"><i class="fa-solid fa-pen"></i></button>
                                                 <input onChange={handleChange} multiple={false} ref={fileInputRef} type='file' hidden accept="image/*" />
                                             </div>
-                                            <span className="font-weight-bold">{employee.firstName + " " + employee.middleName + " " + employee.lastName}</span>
+                                            <span className="fw-semibold dark-text mt-3">{employee.firstName + " " + employee.middleName + " " + employee.lastName}</span>
+                                            <span className="text-black-50">{employee.role}</span>
                                             <span className="text-black-50">{employee.email}</span>
                                             <span className="text-black-50">{employee.contactNumber}</span></div>
                                     </div>
