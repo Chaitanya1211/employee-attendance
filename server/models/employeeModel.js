@@ -14,7 +14,7 @@ const employeeSchema = mongoose.Schema({
     },
     "role":{
         type:String,
-        enum:['developer','tester','intern'],
+        enum:['Developer','Tester','Intern'],
         required:true
     },
     "profileImg":{

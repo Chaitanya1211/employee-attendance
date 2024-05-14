@@ -1,5 +1,6 @@
 const Employee = require("../models/employeeModel");
 const Attendance = require("../models/attendanceModel");
+const Project = require("../models/projectModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cloudinary = require('cloudinary').v2;
@@ -46,7 +47,8 @@ async function login(req, res) {
                 // success
                 const payload = {
                     id: employee._id,
-                    email: employee.email
+                    email: employee.email,
+                    role: employee.role
                 }
                 const token = jwt.sign(payload, process.env.SECRET_KEY);
                 console.log("Login success");
@@ -64,13 +66,23 @@ async function login(req, res) {
     }
 }
 
+async function getRole(req, res) {
+    try {
+        const role=req.user.role;
+        res.status(200).json({message:"Role found", role:role});
+    } catch (error) {
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
 async function getDetails(req, res) {
     try {
         const user = req.user.email;
         const employee = await Employee.findOne({ email: user });
         if (employee) {
             // console.log(employee)
-            res.status(200).json({ message: "Employee found", profile: employee })
+            res.status(200).json({ message: "Employee found", profile: employee, role : req.user.role })
         } else {
             console.log("Employee not found")
             res.status(404).json({ message: "Employee not found" })
@@ -119,14 +131,14 @@ async function markLogin(req, res) {
     };
 
     try {
-        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields },{new:true})
+        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
         if (result) {
             // attendance marked
             let attendance = await getAllAttendance(email);
-            if(attendance.length != 0){
-                res.status(200).json({ message: "Attendance marked", todayStatus : result ,attendance : attendance})
-            }else{
-                res.status(200).json({ message: "Attendance marked", todayStatus : result ,attendance : []})
+            if (attendance.length != 0) {
+                res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: attendance })
+            } else {
+                res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: [] })
             }
         } else {
             // attendance not marked
@@ -147,13 +159,13 @@ async function markLogout(req, res) {
         isLoggedOut: true
     };
     try {
-        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields },{new:true})
+        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
         if (result.nModified != 0) {
             let attendance = await getAllAttendance(email);
-            if(attendance.length != 0){
-                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus :result , attendance : attendance})
-            }else{
-                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus :result , attendance : attendance})
+            if (attendance.length != 0) {
+                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result, attendance: attendance })
+            } else {
+                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result, attendance: attendance })
             }
         } else {
             res.status(500).json({ message: "Attendance not marked. Internal server error" })
@@ -166,6 +178,7 @@ async function markLogout(req, res) {
 
 async function home(req, res) {
     const email = req.user.email;
+    const role = req.user.role;
     const current = getCurrentDate();
     try {
         const profile = await Employee.findOne({ email: email }, "firstName lastName email contactNumber profileImg");
@@ -181,7 +194,7 @@ async function home(req, res) {
             const showDate = getCurrentDateAndDayFormatted();
             const newToday = new Attendance({
                 employeeEmail: email,
-                showDate :showDate,
+                showDate: showDate,
                 today: currentDate,
                 isLoggedIn: false,
                 isLoggedOut: false
@@ -189,32 +202,66 @@ async function home(req, res) {
             todayStatus = await newToday.save();
         }
 
-        let attendance= await getAllAttendance(email);
-        if(attendance.length != 0){
-            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus, attendance : attendance });
-        }else{
-            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus });
+        let attendance = await getAllAttendance(email);
+        if (attendance.length != 0) {
+            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus, attendance: attendance , role:role});
+        } else {
+            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus, role:role });
         }
 
     } catch (error) {
         console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error' , role:role});
     }
 }
 
-async function getAllAttendance(email){
-    try{
-        const result= await Attendance.find({employeeEmail:email}).sort({ today: -1 });
-        if(result){
+async function getAllAttendance(email) {
+    try {
+        const result = await Attendance.find({ employeeEmail: email }).sort({ today: -1 });
+        if (result) {
             return result;
-        }else{
+        } else {
             return null;
         }
-    }catch(error){
+    } catch (error) {
         return null;
     }
 }
 
+async function getAllProjects(req,res){
+    try{
+        const projects = await Project.find({});
+        if(projects){
+          res.status(200).json({message : "Projects found", projects : projects});
+        }else{
+          res.status(404).json({ message: 'No projects found' });
+        }
+      }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+}
+
+async function getProjectDetails(req,res){
+    // for tester
+    const projectId = req.params.projectId;
+    const role = req.user.role;
+    console.log("Role :", role)
+    const projectDetails = await getProject(projectId);
+    if(role == "Tester"){
+        if(projectDetails != null){
+            res.json({details : projectDetails});
+        }else{
+            console.log("Project not found");
+        }
+
+    }else{
+        // for developer
+        console.log("Api for developer")
+    }
+
+   
+}
 function getCurrentDate() {
     const currentDate = new Date();
     const isoDate = currentDate.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
@@ -234,9 +281,23 @@ function getCurrentDateAndDayFormatted() {
         weekday: 'long',
         timeZone: 'Asia/Kolkata'
     };
-    const formattedDate = new Intl.DateTimeFormat('en-US',options).format(currentDate);
+    const formattedDate = new Intl.DateTimeFormat('en-US', options).format(currentDate);
     const formattedDateWithoutOrdinal = formattedDate.replace(/(\d{1,2})(th|st|nd|rd)/, '$1');
     return formattedDateWithoutOrdinal;
+}
+
+async function getProject(projectId){
+    try {
+        const result = await Project.find({_id : projectId});
+        if (result) {
+            return result;
+        } else {
+            return result;
+        }
+    } catch (error) {
+        return null;
+    }
+
 }
 
 exports.register = register;
@@ -246,3 +307,6 @@ exports.updateProfile = updateProfile;
 exports.markLogin = markLogin;
 exports.markLogout = markLogout;
 exports.home = home;
+exports.getRole = getRole;
+exports.getAllProjects = getAllProjects;
+exports.getProjectDetails = getProjectDetails;

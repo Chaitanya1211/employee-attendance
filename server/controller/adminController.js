@@ -92,7 +92,7 @@ async function inviteEmployee(req, res) {
 
 async function allEmployees(req, res) {
   try {
-    const employees = await Employee.find({}, "firstName lastName email contactNumber profileImg");
+    const employees = await Employee.find({}, "firstName lastName email contactNumber profileImg role");
     if (employees) {
       res.status(200).json({ all: employees });
     } else {
@@ -128,12 +128,14 @@ async function getSingleEmployee(req, res) {
 async function createNewProject(req, res) {
   try {
     let projectImg = req.file;
+    let imageUrl;
     let publicUrl;
     if (projectImg) {
-      publicUrl = await cloudinary.uploader.upload(projectImg.path)
+      publicUrl = await cloudinary.uploader.upload(projectImg.path);
+      imageUrl = publicUrl.secure_url;
     }
     const projectId = generateRandomFourDigitNumber();
-    const newProject = await Project.create({ ...req.body, projectId: projectId, projectImage: publicUrl.secure_url });
+    const newProject = await Project.create({ ...req.body, projectId: projectId, projectImage: imageUrl });
     if (newProject) {
       console.log("New project created");
       res.status(201).json({ message: 'Project created successfully', project: newProject });
@@ -141,6 +143,20 @@ async function createNewProject(req, res) {
       res.status(500).json({ error: 'Internal server error', message: "Project could notbe created" });
     }
   } catch (error) {
+    console.error('Internal server error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function getAllProjects(req,res){
+  try{
+    const projects = await Project.find({});
+    if(projects){
+      res.status(200).json({message : "Projects found", projects : projects});
+    }else{
+      res.status(404).json({ message: 'No projects found' });
+    }
+  }catch(error){
     console.error('Internal server error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -208,3 +224,4 @@ exports.inviteEmployee = inviteEmployee;
 exports.allEmployees = allEmployees;
 exports.getSingleEmployee = getSingleEmployee;
 exports.createNewProject = createNewProject;
+exports.getAllProjects = getAllProjects;

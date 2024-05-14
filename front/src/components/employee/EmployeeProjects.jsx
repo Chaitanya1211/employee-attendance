@@ -1,20 +1,21 @@
+import { EmployeeSidebar } from "./EmployeeSidebar";
 import { useEffect, useState } from "react";
-import { AdminSidebar } from "./AdminSidebar";
-import { Link } from 'react-router-dom';
 import axios from "axios";
+import { Link } from "react-router-dom";
 
-export function AdminProjects() {
+export function EmployeeProjects() {
+
     const [token, getToken] = useState(localStorage.getItem('token') || '');
     const [projects, setProjects] = useState([]);
     useEffect(() => {
         axios({
-            url: "http://localhost:8080/admin/projects",
+            url: "http://localhost:8080/employee/projects",
             method: "GET",
             headers: {
                 "token": token
             }
         }).then((response) => {
-            console.log("Response :", response);
+            console.log("Response Project list :", response);
             if (response.status === 200) {
                 setProjects(response.data?.projects)
             }
@@ -22,13 +23,13 @@ export function AdminProjects() {
             console.log("Error :", error)
         })
     }, [])
+
     return (
         <>
             <div className="d-flex">
                 <div className="col-lg-2 position-fixed">
-                    <AdminSidebar />
+                    <EmployeeSidebar />
                 </div>
-
                 <div className="col-lg-10" style={{ "marginLeft": "auto" }}>
                     <div className="col-lg-12 p-5">
                         <div class="row">
@@ -45,8 +46,6 @@ export function AdminProjects() {
                                 </div>
                             </div>
                         </div>
-
-
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="card">
@@ -62,7 +61,7 @@ export function AdminProjects() {
                                             </div>
                                             <div class="col-sm-auto">
                                                 <div class="text-sm-end">
-                                                    <a href="http://localhost:5173/admin/newproject" class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Add New Project</a>
+                                                    <a href="#" class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Add New Project</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -105,7 +104,10 @@ export function AdminProjects() {
                                                                     <td>2</td>
                                                                     <td>1</td>
                                                                     <td>
+                                                                        <Link to={`/project/${project._id}`}>
                                                                         <button class="btn btn-primary">View More</button>
+                                                                        </Link>
+                                                                        
                                                                     </td>
                                                                 </tr>
 

@@ -133,6 +133,7 @@ export function AdminEmployee() {
                                                             <th scope="col" style={{ "width": "40px" }}>Sr. No.</th>
                                                             <th scope="col">Name</th>
                                                             <th scope="col">Email</th>
+                                                            <th scope="col">Role</th>
                                                             <th scope="col">Contact number</th>
                                                             <th scope="col">Status</th>
                                                         </tr>
@@ -154,8 +155,9 @@ export function AdminEmployee() {
                                                                             </div>
                                                                         </div>
                                                                     </td>
-                                                                    <td>{employee.email}</td>
-                                                                    <td>{employee.contactNumber}</td>
+                                                                    <td>{employee.email ?? ""}</td>
+                                                                    <td>{employee.role ?? ""}</td>
+                                                                    <td>{employee.contactNumber ?? ""}</td>
                                                                     <td><span class="badge bg-success">Active</span></td>
                                                                 </tr>
                                                             );

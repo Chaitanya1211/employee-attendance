@@ -11,4 +11,8 @@ router.put("/markLogin", auth, employee.markLogin);
 router.put("/markLogout", auth, employee.markLogout);
 router.get("/home", auth, employee.home);
 router.get("/attendances", auth);
+router.get('/getRole',auth, employee.getRole);
+router.get("/projects",auth, employee.getAllProjects);
+router.get("/project/:projectId",auth,employee.getProjectDetails);
+router.post('/newBug',auth);
 module.exports = router

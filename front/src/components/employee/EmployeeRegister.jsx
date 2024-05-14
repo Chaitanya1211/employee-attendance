@@ -20,7 +20,6 @@ export function EmployeeRegister() {
     const [loader, setLoader] = useState(false);
     
     const { inviteData } = useParams();
-    console.log(inviteData);
     const inviteObject =JSON.parse( Base64.decode(inviteData));
     const email = inviteObject.email;
     const role =inviteObject.role;

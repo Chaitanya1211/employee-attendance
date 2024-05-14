@@ -12,6 +12,9 @@ import { EmployeeProfile } from './components/employee/EmployeeProfile';
 import { EmployeeDetails } from './components/admin/EmployeeDetails';
 import { AdminProjects } from './components/admin/AdminProjects';
 import { NewProject } from './components/admin/NewProject';
+import { EmployeeProjects } from './components/employee/EmployeeProjects';
+import { SingleProject } from './components/employee/EmployeeSingleProject';
+import { RaiseBug } from './components/employee/RaiseBug';
 
 function App() {
 
@@ -23,6 +26,9 @@ function App() {
         <Route path='/login' element={<EmployeeLogin />}/>
         <Route path='/home' element={<EmployeeHome />} />
         <Route path='/profile' element={<EmployeeProfile />} />
+        <Route path='/projects' element={<EmployeeProjects />} />
+        <Route path='/project/:projectId' element={<SingleProject />} />
+        <Route path='/raiseBug' element={<RaiseBug />} />
         {/* Admin Routes */}
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path='/admin/home' element={<AdminHome />} />
