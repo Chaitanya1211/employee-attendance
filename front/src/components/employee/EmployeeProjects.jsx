@@ -7,6 +7,7 @@ export function EmployeeProjects() {
 
     const [token, getToken] = useState(localStorage.getItem('token') || '');
     const [projects, setProjects] = useState([]);
+    const [role, setRole] = useState();
     useEffect(() => {
         axios({
             url: "http://localhost:8080/employee/projects",
@@ -57,11 +58,6 @@ export function EmployeeProjects() {
                                                         <input type="text" class="form-control" autocomplete="off" id="searchTableList" placeholder="Search..." />
                                                         <i class="bx bx-search-alt search-icon"></i>
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-auto">
-                                                <div class="text-sm-end">
-                                                    <a href="#" class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Add New Project</a>
                                                 </div>
                                             </div>
                                         </div>

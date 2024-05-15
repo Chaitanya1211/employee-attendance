@@ -13,7 +13,6 @@ export function EmployeeSidebar({name}) {
             "token":token
         }
        }).then((resposne) =>{
-        console.log("Response", resposne)
         setRole(resposne.role);
        }).catch((error)=>{
         console.log("Error :", error)

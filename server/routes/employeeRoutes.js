@@ -14,5 +14,6 @@ router.get("/attendances", auth);
 router.get('/getRole',auth, employee.getRole);
 router.get("/projects",auth, employee.getAllProjects);
 router.get("/project/:projectId",auth,employee.getProjectDetails);
-router.post('/newBug',auth);
+router.post('/newBug',auth,upload.any() ,employee.raiseBug);
+router.get('/allEmployees',auth, employee.allEmployees);
 module.exports = router

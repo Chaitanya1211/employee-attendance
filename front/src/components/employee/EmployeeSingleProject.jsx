@@ -6,6 +6,8 @@ import axios from "axios";
 export function SingleProject() {
     const {projectId} = useParams();
     const [token,setToken] = useState(localStorage.getItem('token') || '');
+    const [role, setRole] = useState();
+    const [showBug, setShowBug] = useState(false);
     const [project,setProject] = useState([]);
     useEffect(()=>{
         axios({
@@ -15,8 +17,11 @@ export function SingleProject() {
                 "token":token
             }
         }).then((response)=>{
-            console.log(response)
             setProject(response.data.details[0]);
+            console.log("Role :", response.data.role)
+            if(response.data.role=="Tester"){
+                setShowBug(true);
+            }
         }).catch((error) =>{
             console.log("Error :", error)
         })
@@ -198,11 +203,14 @@ export function SingleProject() {
                                     </div>
                                 </div>
                             </div>
+                            {/* If role==developer then not show button */}
+                            {showBug && 
                             <div class="col-sm-auto">
                                 <div class="text-sm-end">
-                                    <a href="http://localhost:5173/raiseBug" class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Raise Bug</a>
+                                    <a href={`http://localhost:5173/raiseBug/${project._id}`} class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Raise Bug</a>
                                 </div>
                             </div>
+                            }
                         </div>
 
                         <div className="row">

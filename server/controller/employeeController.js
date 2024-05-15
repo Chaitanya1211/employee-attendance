@@ -3,6 +3,7 @@ const Attendance = require("../models/attendanceModel");
 const Project = require("../models/projectModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Bug = require("../models/bugModel");
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 cloudinary.config({
@@ -68,8 +69,8 @@ async function login(req, res) {
 
 async function getRole(req, res) {
     try {
-        const role=req.user.role;
-        res.status(200).json({message:"Role found", role:role});
+        const role = req.user.role;
+        res.status(200).json({ message: "Role found", role: role });
     } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -82,7 +83,7 @@ async function getDetails(req, res) {
         const employee = await Employee.findOne({ email: user });
         if (employee) {
             // console.log(employee)
-            res.status(200).json({ message: "Employee found", profile: employee, role : req.user.role })
+            res.status(200).json({ message: "Employee found", profile: employee, role: req.user.role })
         } else {
             console.log("Employee not found")
             res.status(404).json({ message: "Employee not found" })
@@ -181,7 +182,7 @@ async function home(req, res) {
     const role = req.user.role;
     const current = getCurrentDate();
     try {
-        const profile = await Employee.findOne({ email: email }, "firstName lastName email contactNumber profileImg");
+        const profile = await Employee.findOne({ email: email }, "firstName lastName email contactNumber profileImg role");
         let todayStatus = await Attendance.findOne({ $and: [{ employeeEmail: email }, { today: current }] });
 
         if (!profile) {
@@ -204,14 +205,14 @@ async function home(req, res) {
 
         let attendance = await getAllAttendance(email);
         if (attendance.length != 0) {
-            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus, attendance: attendance , role:role});
+            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus, attendance: attendance, role: role });
         } else {
-            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus, role:role });
+            res.status(200).json({ message: "Details found", profile: profile, todayStatus: todayStatus, role: role });
         }
 
     } catch (error) {
         console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' , role:role});
+        res.status(500).json({ error: 'Internal server error', role: role });
     }
 }
 
@@ -228,40 +229,88 @@ async function getAllAttendance(email) {
     }
 }
 
-async function getAllProjects(req,res){
-    try{
+async function getAllProjects(req, res) {
+    const role = req.user.role;
+    try {
         const projects = await Project.find({});
-        if(projects){
-          res.status(200).json({message : "Projects found", projects : projects});
-        }else{
-          res.status(404).json({ message: 'No projects found' });
+        if (projects) {
+            res.status(200).json({ message: "Projects found", projects: projects, role: role });
+        } else {
+            res.status(404).json({ message: 'No projects found', role: role });
         }
-      }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
-      }
+    }
 }
 
-async function getProjectDetails(req,res){
+async function getProjectDetails(req, res) {
     // for tester
     const projectId = req.params.projectId;
     const role = req.user.role;
     console.log("Role :", role)
     const projectDetails = await getProject(projectId);
-    if(role == "Tester"){
-        if(projectDetails != null){
-            res.json({details : projectDetails});
-        }else{
-            console.log("Project not found");
+    if (role == "Tester") {
+        if (projectDetails != null) {
+            res.status(200).json({ details: projectDetails, role: role });
+        } else {
+            res.status(404).json({ message: "No project found", role: role });
+            // console.log("Project not found");
         }
 
-    }else{
+    } else {
         // for developer
         console.log("Api for developer")
     }
-
-   
 }
+
+async function raiseBug(req, res) {
+    console.log("Bug raise request")
+    const userEmail = req.user.email;
+    const role = req.user.role;
+    if (role == "Tester") {
+        console.log("Req body", req.body);
+        const files = req.files; // Get array of uploaded files
+        let publicUrls = [];
+        if (files) {
+
+            // Iterate through each file and upload to Cloudinary
+            for (const file of files) {
+                const { path } = file;
+                const result = await cloudinary.uploader.upload(path);
+                publicUrls.push(result.secure_url);
+            }
+            console.log("Uploaded URLs:", publicUrls);
+        }
+
+        const newBug = await Bug.create({ ...req.body, raisedBy: userEmail, images: publicUrls });
+        console.log("Bug created :", newBug);
+        if (newBug) {
+            return res.status(201).json({ message: "Bug created", bug: newBug })
+        } else {
+            return res.status(500).json({ message: "Bug not created" })
+        }
+    } else {
+        // unauthorised access
+        return res.status(401).json({ message: "Access restricted" })
+    }
+}
+
+async function allEmployees(req, res) {
+    try {
+        const employeeData = await Employee.find({}, 'firstName lastName email')
+        if (employeeData) {
+            res.status(200).json({ employees: employeeData })
+        } else {
+            res.status(404).json({ employees: employeeData })
+        }
+    } catch (error) {
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+// No route functions
 function getCurrentDate() {
     const currentDate = new Date();
     const isoDate = currentDate.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
@@ -272,6 +321,7 @@ function getCurrentDateTime() {
     const currentDate = new Date();
     return currentDate.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
 }
+
 function getCurrentDateAndDayFormatted() {
     const currentDate = new Date();
     const options = {
@@ -286,9 +336,9 @@ function getCurrentDateAndDayFormatted() {
     return formattedDateWithoutOrdinal;
 }
 
-async function getProject(projectId){
+async function getProject(projectId) {
     try {
-        const result = await Project.find({_id : projectId});
+        const result = await Project.find({ _id: projectId });
         if (result) {
             return result;
         } else {
@@ -310,3 +360,5 @@ exports.home = home;
 exports.getRole = getRole;
 exports.getAllProjects = getAllProjects;
 exports.getProjectDetails = getProjectDetails;
+exports.raiseBug = raiseBug;
+exports.allEmployees = allEmployees;

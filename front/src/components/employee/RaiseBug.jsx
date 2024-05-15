@@ -1,157 +1,174 @@
 import { EmployeeSidebar } from "./EmployeeSidebar";
+import { useForm } from "react-hook-form";
+import { yupResolver } from '@hookform/resolvers/yup';
+import bugSchema from '../../helper/bugValidator';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useParams } from 'react-router-dom';
+import { useDropzone } from 'react-dropzone';
+export function RaiseBug() {
+    const [token, setToken] = useState(localStorage.getItem('token') || '');
+    const { register, handleSubmit, formState: { errors }, setValue } = useForm({
+        resolver: yupResolver(bugSchema)
+    });
+    const [employees, setEmployees] = useState([]);
 
-export function RaiseBug(){
+    useEffect(() => {
+        axios({
+            url: "http://localhost:8080/employee/allEmployees",
+            method: "GET",
+            headers: {
+                "token": token
+            }
+        }).then((response) => {
+            if (response.status === 200) {
+                console.log(response)
+                setEmployees(response.data.employees)
+            }
+        }).catch((error) => {
+            setEmployees([]);
+            if (error.response && error.response.status === 404) {
+                console.log(error)
+            } else if (error.response && error.response.status === 500) {
+                console.log(error)
+            }
+        })
+    }, [])
+
+    const { projectId } = useParams();
+    function onFormSubmit(data) {
+        const bugBody = {...data, projectId : projectId}
+        console.log("Bug body:",bugBody);
+        axios({
+            url : "http://localhost:8080/employee/newBug",
+            method :"POST",
+            headers:{
+                "Content-Type": "multipart/form-data",
+                "token":token
+            },
+            data : bugBody
+        }).then((response)=>{
+            console.log("response" ,response)
+        }).catch((error)=>{
+            console.log("Error :", error)
+        })
+        console.log(data)
+    }
+    function onErrors(errors) {
+        console.log(errors)
+    }
+
+    const [files, setFiles] = useState([]);
+
+    const { getRootProps, getInputProps } = useDropzone({
+      accept: 'image/*', // specify file types if needed
+      onDrop: (acceptedFiles) => {
+        setValue('images', acceptedFiles);
+        setFiles(prevFiles => [
+          ...prevFiles,
+          ...acceptedFiles.map(file => Object.assign(file, {
+            preview: URL.createObjectURL(file)
+          }))
+        ]);
+      },
+      multiple: true
+    });
+  
+    useEffect(() => {
+      return () => {
+        files.forEach(file => URL.revokeObjectURL(file.preview));
+      };
+    }, [files]);
+  
+    const removeFile = (fileName) => {
+      setFiles(files.filter(file => file.name !== fileName));
+    };
+  
+    const renderFiles = () => files.map(file => (
+      <div key={file.name} style={{ display: 'flex', alignItems: 'center', margin: '10px 0' }}>
+        {file.type.startsWith('image/') && <img src={file.preview} alt={file.name} width="50px" style={{ marginRight: '10px' }} />}
+        <p style={{ margin: 0 }}>{file.name}</p>
+        <button onClick={() => removeFile(file.name)} style={{ marginLeft: '10px' }}>Remove</button>
+      </div>
+    ));
+
+    
+
     return (
         <>
             <div className="d-flex">
                 <div className="col-lg-2 position-fixed">
                     <EmployeeSidebar />
                 </div>
-                <div className="col-lg-10" style={{"marginLeft" : "auto"}}>
+                <div className="col-lg-10" style={{ "marginLeft": "auto" }}>
                     <div className="col-lg-12 p-5">
-                    <form id="createproject-form" autocomplete="off" class="needs-validation" novalidate>
-                            
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="page-title-box d-flex align-items-center justify-content-between">
+                                    <h4 class="mb-0 font-size-18">New bug</h4>
+
+                                    <div class="page-title-right">
+                                        <ol class="breadcrumb m-0">
+                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Project</a></li>
+                                            <li class="breadcrumb-item active">New bug</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit(onFormSubmit, onErrors)}>
                             <div class="row">
                                 <div class="col-lg-8">
                                     <div class="card">
-                                        <div class="card-body">  
-                                            <input type="hidden" class="form-control" id="formAction" name="formAction" value="add"/>
-                                            <input type="hidden" class="form-control" id="project-id-input"/>
-                                            <div class="mb-3">
-                                                <label for="projectname-input" class="form-label">Project Name</label>
-                                                
-                                                <input id="projectname-input" name="projectname-input" type="text" class="form-control" placeholder="Enter project name..." required/>
-                                                <div class="invalid-feedback">Please enter a project name.</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Project Image</label>
-                                                
-                                                <div class="text-center">
-                                                    <div class="position-relative d-inline-block">
-                                                        <div class="position-absolute bottom-0 end-0">
-                                                            <label for="project-image-input" class="mb-0" data-bs-toggle="tooltip" data-bs-placement="right" title="Select Image">
-                                                                <div class="avatar-xs">
-                                                                    <div class="avatar-title bg-light border rounded-circle text-muted cursor-pointer shadow font-size-16">
-                                                                        <i class='bx bxs-image-alt'></i>
-                                                                    </div>
-                                                                </div>
-                                                            </label>
-                                                            <input class="form-control d-none" value="" id="project-image-input" type="file" accept="image/png, image/gif, image/jpeg"/>
-                                                        </div>
-                                                        <div class="avatar-lg">
-                                                            <div class="avatar-title bg-light rounded-circle">
-                                                                <img src="" id="projectlogo-img" class="avatar-md h-auto rounded-circle" />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="projectdesc-input" class="form-label">Project Description</label>
-                                                <textarea class="form-control" id="projectdesc-input" rows="3" placeholder="Enter project description..." required></textarea>
-                                                <div class="invalid-feedback">Please enter a project description.</div>
-                                            </div>
-                                            <div class="mb-3 position-relative">
-                                                <label for="task-assign-input" class="form-label">Assigned To</label>
-                    
-                                                <div class="avatar-group justify-content-center" id="assignee-member"></div>
+                                        <div class="card-body">
 
-                                                <div class="select-element" id="select-element">
-                                                    <button class="btn btn-light w-100 d-flex justify-content-between" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                                        <span>Assigned To<b id="total-assignee" class="mx-1">0</b>Members</span> <i class="mdi mdi-chevron-down"></i>
-                                                    </button>
-                                                    <div class="dropdown-menu w-100">
-                                                        <div data-simplebar style={{"max-height" : "172px"}}>
-                                                            <ul class="list-unstyled mb-0 assignto-list">
-                                                                <li>
-                                                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                                                        <div class="avatar-xs flex-shrink-0 me-2">
-                                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="img-fluid rounded-circle" />
-                                                                        </div>
-                                                                        <div class="flex-grow-1">Tommie Metzler</div>
-                                                                    </a>
-                                                                </li>
-                                                                <li>
-                                                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                                                        <div class="avatar-xs flex-shrink-0 me-2">
-                                                                            <img src="assets/images/users/avatar-3.jpg" alt="" class="img-fluid rounded-circle" />
-                                                                        </div>
-                                                                        <div class="flex-grow-1">Paul Barone</div>
-                                                                    </a>
-                                                                </li>
-                                                                <li>
-                                                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                                                        <div class="avatar-xs flex-shrink-0 me-2">
-                                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="img-fluid rounded-circle" />
-                                                                        </div>
-                                                                        <div class="flex-grow-1">Chris Lucas</div>
-                                                                    </a>
-                                                                </li>
-                                                                <li>
-                                                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                                                        <div class="avatar-xs flex-shrink-0 me-2">
-                                                                            <img src="assets/images/users/avatar-1.jpg" alt="" class="img-fluid rounded-circle" />
-                                                                        </div>
-                                                                        <div class="flex-grow-1">Shirley North</div>
-                                                                    </a>
-                                                                </li>
-                                                                <li>
-                                                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                                                        <div class="avatar-xs flex-shrink-0 me-2">
-                                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="img-fluid rounded-circle" />
-                                                                        </div>
-                                                                        <div class="flex-grow-1">Patricia Pierce</div>
-                                                                    </a>
-                                                                </li>
-                    
-                                                                <li>
-                                                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                                                        <div class="avatar-xs flex-shrink-0 me-2">
-                                                                            <img src="assets/images/users/avatar-6.jpg" alt="" class="img-fluid rounded-circle" />
-                                                                        </div>
-                                                                        <div class="flex-grow-1">William Max</div>
-                                                                    </a>
-                                                                </li>
-                                                                <li>
-                                                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                                                        <div class="avatar-xs flex-shrink-0 me-2">
-                                                                            <img src="assets/images/users/avatar-7.jpg" alt="" class="img-fluid rounded-circle" />
-                                                                        </div>
-                                                                        <div class="flex-grow-1">Johnnie Walton</div>
-                                                                    </a>
-                                                                </li>
-                                                                <li>
-                                                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                                                        <div class="avatar-xs flex-shrink-0 me-2">
-                                                                            <img src="assets/images/users/avatar-8.jpg" alt="" class="img-fluid rounded-circle" />
-                                                                        </div>
-                                                                        <div class="flex-grow-1">Miriam Crum</div>
-                                                                    </a>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
+                                            <div class="mb-3">
+                                                <label for="projectname-input" class="form-label">Bug title</label><span class="text-danger"> *</span>
+                                                <input id="projectname-input" name="projectname-input" type="text" class="form-control" placeholder="Enter bug title..." {...register('title')} />
+                                                <small className="text-danger">
+                                                    {errors?.title && errors.title.message}
+                                                </small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="projectdesc-input" class="form-label">Bug Description</label><span class="text-danger"> *</span>
+                                                <textarea class="form-control" id="projectdesc-input" rows="3" placeholder="Enter bug description..." {...register('description')}></textarea>
+                                                <small className="text-danger">
+                                                    {errors?.description && errors.description.message}
+                                                </small>
+                                            </div>
+                                            <div class="mb-3 ">
+                                                <label for="task-assign-input" class="form-label">Assign To</label><span class="text-danger"> *</span>
+                                                <select class="form-select" name="" id="" {...register('assignedTo')}>
+                                                    <option value="">Select Employee</option>
+                                                    {employees.map((employee) => (
+                                                        <option key={employee.email} value={employee.email}>
+                                                            {employee.firstName + " " + employee.lastName}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <small className="text-danger">
+                                                    {errors?.assignedTo && errors.assignedTo.message}
+                                                </small>
+                                            </div>
+                                            <label class="form-label">Attached Files</label>
+                                            <div {...getRootProps({ className: 'dropzone' })} style={{
+                                                border: '2px dashed #cccccc', borderRadius: '5px', padding: '10px', textAlign: 'center'
+                                            }}>
+                                                <input {...getInputProps()} />
+                                                <div className="dz-message text-center">
+                                                    <div className="mb-3">
+                                                        <i className="display-4 text-muted bx bxs-cloud-upload"></i>
                                                     </div>
+                                                    <h4>Drop files here or click to upload.</h4>
                                                 </div>
                                             </div>
                                             <div>
-                                                <label class="form-label">Attached Files</label>
-                                                <div class="fallback dropzone" id="myId" enctype="multipart/form-data">
-                                                    <div class="fallback">
-                                                        <input name="file" type="file" multiple />
-                                                    </div>
-                    
-                                                    <div class="dz-message needsclick">
-                                                        <div class="mb-3">
-                                                            <i class="display-4 text-muted bx bxs-cloud-upload"></i>
-                                                        </div>
-                    
-                                                        <h4>Drop files here or click to upload.</h4>
-                                                    </div>
-                                                </div>
+                                                {renderFiles()}
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="card">
@@ -159,40 +176,43 @@ export function RaiseBug(){
                                             <h5 class="card-title mb-3">Publish</h5>
 
                                             <div class="mb-3">
-                                                <label class="form-label" for="project-status-input">Status</label>
-                                                <select class="form-select" id="project-status-input">
-                                                    <option value="Completed">Completed</option>
-                                                    <option value="Inprogress" selected>Inprogress</option>
-                                                    <option value="Delay">Delay</option>
+                                                <label class="form-label" for="project-status-input">QA Status</label><span class="text-danger"> *</span>
+                                                <select class="form-select" id="project-status-input" {...register('qa_status')} >
+                                                    <option value="OPEN" selected>Open</option>
+                                                    <option value="RECHECKING">Rechecking</option>
+                                                    <option value="CLOSED">Closed</option>
                                                 </select>
-                                                <div class="invalid-feedback">Please select project status.</div>
+                                                <small className="text-danger">
+                                                    {errors?.qa_status && errors.qa_status.message}
+                                                </small>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label" for="project-status-input">Developer Status</label>
+                                                <select class="form-select" id="project-status-input" disabled>
+                                                    <option value="" selected>Open</option>
+                                                    <option value="">Inprogress</option>
+                                                    <option value="">Done</option>
+                                                </select>
+
                                             </div>
 
                                             <div>
-                                                <label class="form-label" for="project-visibility-input">Visibility</label>
-                                                <select class="form-select" id="project-visibility-input">
-                                                    <option value="Private">Private</option>
-                                                    <option value="Public">Public</option>
-                                                    <option value="Team">Team</option>
+                                                <label class="form-label" for="project-visibility-input">Priority</label><span class="text-danger"> *</span>
+                                                <select class="form-select" id="project-visibility-input" {...register('priority')}>
+                                                    <option value="">Select Priority</option>
+                                                    <option value="HIGH">High</option>
+                                                    <option value="MEDIUM">Medium</option>
+                                                    <option value="LOW">Low</option>
                                                 </select>
+                                                <small className="text-danger">
+                                                    {errors?.priority && errors.priority.message}
+                                                </small>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title mb-3">Due Date</h5>
-                                            
-                                            <input type="text" id="duedate-input" class="form-control" placeholder="Select due date" name="due date" data-date-format="dd M, yyyy" data-provide="datepicker" data-date-autoclose="true" required />
-                                            <div class="invalid-feedback">Please select due date.</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-8">
-                                    <div class="text-end mb-4">
-                                        <button type="submit" class="btn btn-primary">Create Project</button>
-                                    </div>
+                                    <button type="submit" class="btn btn-primary float-end">Create</button>
                                 </div>
                             </div>
                         </form>
