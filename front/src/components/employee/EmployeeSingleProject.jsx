@@ -4,28 +4,77 @@ import { useParams } from 'react-router-dom';
 import axios from "axios";
 
 export function SingleProject() {
-    const {projectId} = useParams();
-    const [token,setToken] = useState(localStorage.getItem('token') || '');
+    const { projectId } = useParams();
+    const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [role, setRole] = useState();
     const [showBug, setShowBug] = useState(false);
-    const [project,setProject] = useState([]);
-    useEffect(()=>{
+    const [project, setProject] = useState([]);
+    const [bugs, setBugs] = useState([]);
+    useEffect(() => {
         axios({
-            url : `http://localhost:8080/employee/project/${projectId}`,
-            method:"GET",
-            headers:{
-                "token":token
+            url: `http://localhost:8080/employee/project/${projectId}`,
+            method: "GET",
+            headers: {
+                "token": token
             }
-        }).then((response)=>{
+        }).then((response) => {
             setProject(response.data.details[0]);
+            setBugs(response.data.bugs)
             console.log("Role :", response.data.role)
-            if(response.data.role=="Tester"){
+            if (response.data.role == "Tester") {
                 setShowBug(true);
             }
-        }).catch((error) =>{
+        }).catch((error) => {
             console.log("Error :", error)
         })
-    },[])
+    }, [])
+
+    function toISTLocaleString(date) {
+        if (!date) return 'N/A';
+        const options = {
+            timeZone: 'Asia/Kolkata',
+            day: 'numeric',
+            month: 'short', // 'short' will give the abbreviated month name
+            year: '2-digit',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true // use 12-hour format
+        };
+        return new Date(date).toLocaleString('en-IN', options);
+    }
+
+    function renderPriority(priority){
+        if(!priority) return "N/A";
+
+        switch(priority){
+            case "HIGH":
+                return  <span class="badge bg-danger">HIGH</span>
+            case "MEDIUM":
+                return  <span class="badge bg-warning">MEDIUM</span>
+            case "LOW":
+                return  <span class="badge bg-primary">LOW</span>
+        }
+
+    }
+    function renderStatus(status){
+        if(!status) return <span class="badge bg-info">N/A</span>;
+
+        switch(status){
+            case "OPEN":
+                return <span class="badge bg-danger">OPEN</span>
+            case "RECHECKING":
+                return <span class="badge bg-info">RECHECKING</span>
+            case "CLOSED": 
+                return <span class="badge bg-dark">CLOSED</span>
+            case "INVALID":
+                return <span class="badge bg-primary">INVALID</span>
+            case "INPROGRESS":
+                return <span class="badge bg-warning">INPROGRESS</span>
+            case "DONE":
+                return <span class="badge bg-succeess">DONE</span>
+        }
+    }
+
     return (
         <>
             <div className="d-flex">
@@ -59,7 +108,7 @@ export function SingleProject() {
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
                                                 <h5 class="text-truncate font-size-15">{project.projectTitle}</h5>
-                                                <p class="text-muted">{project.projectDesc ?? ""}</p>
+                                                <p class="text-muted ">{project.projectDesc ?? ""}</p>
                                             </div>
                                         </div>
 
@@ -199,681 +248,77 @@ export function SingleProject() {
                             <div class="col-sm">
                                 <div class="search-box me-2 d-inline-block">
                                     <div class="position-relative">
-                                    <h4 class="mb-0 font-size-18">Bug List</h4>
+                                        <h4 class="mb-0 font-size-18">Bug List</h4>
                                     </div>
                                 </div>
                             </div>
+
                             {/* If role==developer then not show button */}
-                            {showBug && 
-                            <div class="col-sm-auto">
-                                <div class="text-sm-end">
-                                    <a href={`http://localhost:5173/raiseBug/${project._id}`} class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Raise Bug</a>
+
+                            {showBug &&
+                                <div class="col-sm-auto">
+                                    <div class="text-sm-end">
+                                        <a href={`http://localhost:5173/raiseBug/${project._id}`} class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Raise Bug</a>
+                                    </div>
                                 </div>
-                            </div>
                             }
                         </div>
 
-                        <div className="row">
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
+                        {/* Show all bugs */}
+                        <div class="table-responsive">
+                            <table class="table project-list-table align-middle table-nowrap dt-responsive nowrap w-100 table-borderless" id="projectList-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" style={{ "width": "60px" }}>#</th>
+                                        <th scope="col">Bug</th>
+                                        <th scope="col">Raised On</th>
+                                        <th scope="col">Latest Update</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Priority</th>
+                                        <th scope="col">Team</th>
+                                        <th scope="col">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {bugs.map((bug, index) => {
+                                        return (
+                                            <tr>
+                                                <td>
+                                                    <div>{index + 1}</div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-light rounded p-2">
+                                                            <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                        </div>
+                                                        <div class="ps-3">
+                                                            <h5 class="text-truncate font-size-14">
+                                                                <a href="javascript: void(0);" class="text-dark">{bug.title ?? ""}</a>
+                                                            </h5>
+                                                            <p class="text-muted mb-0 text-truncate" style={{ "width": "250px" }}>{bug.description ?? " "}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>{toISTLocaleString(bug.raised_on)}</td>
+                                                <td>{bug.latest_update ?? "N/A"}</td>
+                                                <td>{renderStatus(bug.status)}</td>
+                                                <td>{renderPriority(bug.priority)}</td>
+                                                <td>
+                                                    <div class="avatar-group">
+                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>  
+                                                            <img src={bug.assignedToProfile} alt="" class="rounded-circle avatar-xs"/>                                
+                                                        </a>
+                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.raisedByName}>                                    
+                                                            <img src={bug.raisedByProfile} alt="" class="rounded-circle avatar-xs"/>                                
                                                         </a>
                                                     </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0 me-4">
-                                                <div class="avatar-md">
-                                                    <span class="avatar-title rounded-circle bg-light text-danger font-size-16">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30" />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15"><a href="javascript: void(0);" class="text-dark">New admin Design</a></h5>
-                                                <p class="text-muted mb-4">It will be as simple as Occidental</p>
-                                                <div class="avatar-group">
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <div class="avatar-xs">
-                                                                <span class="avatar-title rounded-circle bg-success text-white font-size-16">
-                                                                    A
-                                                                </span>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                    <div class="avatar-group-item">
-                                                        <a href="javascript: void(0);" class="d-inline-block">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="px-4 py-3 border-top">
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item me-3">
-                                                <span class="badge bg-success">Completed</span>
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-calendar me-1"></i> 15 Oct, 19
-                                            </li>
-                                            <li class="list-inline-item me-3">
-                                                <i class="bx bx-comment-dots me-1"></i> 214
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+                                                </td>
+                                                <td>Take action</td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

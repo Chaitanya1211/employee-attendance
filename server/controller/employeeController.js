@@ -250,9 +250,10 @@ async function getProjectDetails(req, res) {
     const role = req.user.role;
     console.log("Role :", role)
     const projectDetails = await getProject(projectId);
+    const bugs = await getProjectBugs(projectId);
     if (role == "Tester") {
-        if (projectDetails != null) {
-            res.status(200).json({ details: projectDetails, role: role });
+        if (projectDetails != null ) {
+            res.status(200).json({ details: projectDetails, bugs:bugs ,role: role });
         } else {
             res.status(404).json({ message: "No project found", role: role });
             // console.log("Project not found");
@@ -260,6 +261,7 @@ async function getProjectDetails(req, res) {
 
     } else {
         // for developer
+        res.status(200).json({ details: projectDetails, bugs:bugs ,role: role });
         console.log("Api for developer")
     }
 }
@@ -348,6 +350,61 @@ async function getProject(projectId) {
         return null;
     }
 
+}
+
+async function getProjectBugs(projectId){
+    try {
+        // const result = await Bug.find({ projectId: projectId });
+        const result  = await Bug.aggregate([
+            {
+                $match:{
+                    projectId:projectId
+                }
+            },
+            {
+                $lookup:{
+                    from : "employees",
+                    localField : "raisedBy",
+                    foreignField : "email",
+                    as : "raising_employee"
+                }
+            },{
+                $unwind : "$raising_employee"
+            },
+            {   
+                $lookup:{
+                    from:"employees",
+                    localField : "assignedTo",
+                    foreignField : "email",
+                    as : 'assigned_employee'
+                }
+            },{
+                $unwind : "$assigned_employee"
+            },{
+                $project:{
+                    "title":1,
+                    "description": 1,
+                    "raisedByName" : "$raising_employee.firstName",
+                    "raisedByProfile" : "$raising_employee.profileImg",
+                    "assignedToName" : "$assigned_employee.firstName",
+                    "assignedToProfile" : "$assigned_employee.profileImg",
+                    "raised_on" : 1, 
+                    "priority" : 1 ,
+                    "current_status" : 1                  
+                }
+            }
+        ])
+        // const result = await Bug.find({ projectId: projectId }).populate('Employee')
+        // console.log("result=====",result);
+        if (result) {
+            return result;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.log("Error in bugs :" , error)
+        return null;
+    }
 }
 
 exports.register = register;
