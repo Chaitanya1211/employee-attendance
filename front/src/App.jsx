@@ -15,6 +15,7 @@ import { NewProject } from './components/admin/NewProject';
 import { EmployeeProjects } from './components/employee/EmployeeProjects';
 import { SingleProject } from './components/employee/EmployeeSingleProject';
 import { RaiseBug } from './components/employee/RaiseBug';
+import { BugAction } from './components/employee/BugAction';
 
 function App() {
 
@@ -29,6 +30,7 @@ function App() {
         <Route path='/projects' element={<EmployeeProjects />} />
         <Route path='/project/:projectId' element={<SingleProject />} />
         <Route path='/raiseBug/:projectId' element={<RaiseBug />} />
+        <Route path='/bug/:bugId' element={<BugAction />} />
         {/* Admin Routes */}
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path='/admin/home' element={<AdminHome />} />

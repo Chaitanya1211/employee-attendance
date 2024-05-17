@@ -1,3 +1,4 @@
+const mongoose = require("mongoose")
 const Employee = require("../models/employeeModel");
 const Attendance = require("../models/attendanceModel");
 const Project = require("../models/projectModel");
@@ -252,8 +253,8 @@ async function getProjectDetails(req, res) {
     const projectDetails = await getProject(projectId);
     const bugs = await getProjectBugs(projectId);
     if (role == "Tester") {
-        if (projectDetails != null ) {
-            res.status(200).json({ details: projectDetails, bugs:bugs ,role: role });
+        if (projectDetails != null) {
+            res.status(200).json({ details: projectDetails, bugs: bugs, role: role });
         } else {
             res.status(404).json({ message: "No project found", role: role });
             // console.log("Project not found");
@@ -261,7 +262,7 @@ async function getProjectDetails(req, res) {
 
     } else {
         // for developer
-        res.status(200).json({ details: projectDetails, bugs:bugs ,role: role });
+        res.status(200).json({ details: projectDetails, bugs: bugs, role: role });
         console.log("Api for developer")
     }
 }
@@ -312,6 +313,63 @@ async function allEmployees(req, res) {
     }
 }
 
+async function bugDetails(req, res) {
+    // const bugId = req.params.bugId;
+    const bugId = new mongoose.Types.ObjectId(req.params.bugId);
+    console.log("bud Id" , bugId);
+    try {
+        const bug = await Bug.aggregate([{
+            $match: {
+                _id: bugId
+            }
+        },
+        {
+            $lookup: {
+                from: "employees",
+                localField: "raisedBy",
+                foreignField: "email",
+                as: "raising_employee"
+            }
+        },
+        {
+            $unwind : "$raising_employee"
+        },
+        {
+            $lookup:{
+                from: "employees",
+                localField: "assignedTo",
+                foreignField: "email",
+                as: 'assigned_employee'
+            }
+        },{
+            $unwind : "$assigned_employee"
+        },{
+            $project:{
+                "title": 1,
+                "description": 1,
+                "images":1,
+                "raisedByName": "$raising_employee.firstName",
+                "raisedByProfile": "$raising_employee.profileImg",
+                "assignedToName": "$assigned_employee.firstName",
+                "assignedToProfile": "$assigned_employee.profileImg",
+                "raised_on": 1,
+                "priority": 1,
+                "current_status": 1
+            }
+        }
+
+        ]);
+        if (bug.length != 0) {
+            res.status(200).json({ message: "Bug found", bug: bug })
+        } else {
+            res.status(404).json({ message: "Bug not found" });
+        }
+    } catch (error) {
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
 // No route functions
 function getCurrentDate() {
     const currentDate = new Date();
@@ -352,57 +410,55 @@ async function getProject(projectId) {
 
 }
 
-async function getProjectBugs(projectId){
+async function getProjectBugs(projectId) {
     try {
         // const result = await Bug.find({ projectId: projectId });
-        const result  = await Bug.aggregate([
+        const result = await Bug.aggregate([
             {
-                $match:{
-                    projectId:projectId
+                $match: {
+                    projectId: projectId
                 }
             },
             {
-                $lookup:{
-                    from : "employees",
-                    localField : "raisedBy",
-                    foreignField : "email",
-                    as : "raising_employee"
+                $lookup: {
+                    from: "employees",
+                    localField: "raisedBy",
+                    foreignField: "email",
+                    as: "raising_employee"
                 }
-            },{
-                $unwind : "$raising_employee"
+            }, {
+                $unwind: "$raising_employee"
             },
-            {   
-                $lookup:{
-                    from:"employees",
-                    localField : "assignedTo",
-                    foreignField : "email",
-                    as : 'assigned_employee'
+            {
+                $lookup: {
+                    from: "employees",
+                    localField: "assignedTo",
+                    foreignField: "email",
+                    as: 'assigned_employee'
                 }
-            },{
-                $unwind : "$assigned_employee"
-            },{
-                $project:{
-                    "title":1,
+            }, {
+                $unwind: "$assigned_employee"
+            }, {
+                $project: {
+                    "title": 1,
                     "description": 1,
-                    "raisedByName" : "$raising_employee.firstName",
-                    "raisedByProfile" : "$raising_employee.profileImg",
-                    "assignedToName" : "$assigned_employee.firstName",
-                    "assignedToProfile" : "$assigned_employee.profileImg",
-                    "raised_on" : 1, 
-                    "priority" : 1 ,
-                    "current_status" : 1                  
+                    "raisedByName": "$raising_employee.firstName",
+                    "raisedByProfile": "$raising_employee.profileImg",
+                    "assignedToName": "$assigned_employee.firstName",
+                    "assignedToProfile": "$assigned_employee.profileImg",
+                    "raised_on": 1,
+                    "priority": 1,
+                    "current_status": 1
                 }
             }
         ])
-        // const result = await Bug.find({ projectId: projectId }).populate('Employee')
-        // console.log("result=====",result);
         if (result) {
             return result;
         } else {
             return null;
         }
     } catch (error) {
-        console.log("Error in bugs :" , error)
+        console.log("Error in bugs :", error)
         return null;
     }
 }
@@ -419,3 +475,4 @@ exports.getAllProjects = getAllProjects;
 exports.getProjectDetails = getProjectDetails;
 exports.raiseBug = raiseBug;
 exports.allEmployees = allEmployees;
+exports.bugDetails = bugDetails;

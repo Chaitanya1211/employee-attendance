@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { EmployeeSidebar } from "./EmployeeSidebar";
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import axios from "axios";
 
 export function SingleProject() {
@@ -43,28 +43,28 @@ export function SingleProject() {
         return new Date(date).toLocaleString('en-IN', options);
     }
 
-    function renderPriority(priority){
-        if(!priority) return "N/A";
+    function renderPriority(priority) {
+        if (!priority) return "N/A";
 
-        switch(priority){
+        switch (priority) {
             case "HIGH":
-                return  <span class="badge bg-danger">HIGH</span>
+                return <span class="badge bg-danger">HIGH</span>
             case "MEDIUM":
-                return  <span class="badge bg-warning">MEDIUM</span>
+                return <span class="badge bg-warning">MEDIUM</span>
             case "LOW":
-                return  <span class="badge bg-primary">LOW</span>
+                return <span class="badge bg-success">LOW</span>
         }
 
     }
-    function renderStatus(status){
-        if(!status) return <span class="badge bg-info">N/A</span>;
+    function renderStatus(status) {
+        if (!status) return <span class="badge bg-info">N/A</span>;
 
-        switch(status){
+        switch (status) {
             case "OPEN":
                 return <span class="badge bg-danger">OPEN</span>
             case "RECHECKING":
                 return <span class="badge bg-info">RECHECKING</span>
-            case "CLOSED": 
+            case "CLOSED":
                 return <span class="badge bg-dark">CLOSED</span>
             case "INVALID":
                 return <span class="badge bg-primary">INVALID</span>
@@ -305,15 +305,21 @@ export function SingleProject() {
                                                 <td>{renderPriority(bug.priority)}</td>
                                                 <td>
                                                     <div class="avatar-group">
-                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>  
-                                                            <img src={bug.assignedToProfile} alt="" class="rounded-circle avatar-xs"/>                                
+                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>
+                                                            <img src={bug.assignedToProfile} alt="" class="rounded-circle avatar-xs" />
                                                         </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.raisedByName}>                                    
-                                                            <img src={bug.raisedByProfile} alt="" class="rounded-circle avatar-xs"/>                                
+                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.raisedByName}>
+                                                            <img src={bug.raisedByProfile} alt="" class="rounded-circle avatar-xs" />
                                                         </a>
                                                     </div>
                                                 </td>
-                                                <td>Take action</td>
+                                                <td><ul class="list-unstyled hstack gap-1 mb-0">
+                                                    <Link to={`/bug/${bug._id}`} > 
+                                                    <li data-bs-toggle="tooltip" data-bs-placement="top" title="View">
+                                                        <span class="btn btn-sm btn-soft-primary"><i class="mdi mdi-eye-outline"></i></span>
+                                                    </li>
+                                                    </Link>
+                                                </ul></td>
                                             </tr>
                                         )
                                     })}
