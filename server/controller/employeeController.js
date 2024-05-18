@@ -5,6 +5,7 @@ const Project = require("../models/projectModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Bug = require("../models/bugModel");
+const Comment = require("../models/commentModel");
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 cloudinary.config({
@@ -372,6 +373,60 @@ async function bugDetails(req, res) {
     }
 }
 
+async function addComment(req,res){
+    const email = req.user.email;
+    try{
+        const newComment = await Comment.create({...req.body,by:email})
+        if(newComment){
+            res.status(201).json({message : "Comment addded successfully"})
+        }else{
+            res.status(500).json({ message:"Comment addition unsuccessfull", error: 'Internal server error' });
+        }
+    }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function getAllComments(req,res){
+    const bugId = req.params.bugId;
+    try{
+        const allComments = await Comment.aggregate([
+            {
+                $match:{
+                    bugId : bugId
+                }
+            },
+            {
+                $lookup:{
+                    from:"employees",
+                    localField : "by",
+                    foreignField : "email",
+                    as:"employee"
+                }
+            },{
+                $unwind:"$employee"
+            },{
+                $project:{
+                    "comment" : 1,
+                    "employee.firstName" : 1,
+                    "employee.lastName" : 1,
+                    "employee.profileImg":1,
+                    "at" : 1
+                }
+            }
+        ]);
+        console.log("All comments :", allComments)
+        if(allComments){
+            res.status(200).json({message:"Comments found", comments : allComments});
+        }else{
+            res.status(404).json({message:"Comments not present found", comments : allComments});
+        }
+    }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
 // No route functions
 function getCurrentDate() {
     const currentDate = new Date();
@@ -478,3 +533,5 @@ exports.getProjectDetails = getProjectDetails;
 exports.raiseBug = raiseBug;
 exports.allEmployees = allEmployees;
 exports.bugDetails = bugDetails;
+exports.addComment = addComment;
+exports.getAllComments = getAllComments;

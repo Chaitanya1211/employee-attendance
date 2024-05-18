@@ -143,12 +143,8 @@ export function BugAction() {
                                                 </div>
 
                                                 <div class="flex-grow-1">
-                                                    <h5 class="mb-1 font-size-15">Brian</h5>
-                                                    <p class="text-muted">If several languages coalesce, the grammar of the resulting language.</p>
+                                                    No comments
                                                     <ul class="list-inline float-sm-end mb-sm-0">
-                                                        <li class="list-inline-item">
-                                                            <a href="javascript: void(0);"><i class="far fa-thumbs-up me-1"></i> Like</a>
-                                                        </li>
                                                         <li class="list-inline-item">
                                                             <a href="javascript: void(0);"><i class="far fa-comment-dots me-1"></i> Comment</a>
                                                         </li>

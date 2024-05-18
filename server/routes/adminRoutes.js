@@ -9,5 +9,5 @@ router.post("/invite",auth, admin.inviteEmployee);
 router.get("/allEmployees",auth, admin.allEmployees);
 router.post("/employee", auth, admin.getSingleEmployee);
 router.post("/createProject", auth, upload.single('projectImage'), admin.createNewProject);
-router.get("/projects", admin.getAllProjects);
+router.get("/projects", auth,admin.getAllProjects);
 module.exports = router;

@@ -16,5 +16,7 @@ router.get("/projects",auth, employee.getAllProjects);
 router.get("/project/:projectId",auth,employee.getProjectDetails);
 router.post('/newBug',auth,upload.any() ,employee.raiseBug);
 router.get('/allEmployees',auth, employee.allEmployees);
-router.get('/bug/:bugId',auth,employee.bugDetails)
+router.get('/bug/:bugId',auth,employee.bugDetails);
+router.post('/addComment',auth,employee.addComment);
+router.get('/bug/comments/:bugId',auth,employee.getAllComments);
 module.exports = router
