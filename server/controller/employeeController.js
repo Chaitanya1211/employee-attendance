@@ -354,7 +354,9 @@ async function bugDetails(req, res) {
                 "assignedToProfile": "$assigned_employee.profileImg",
                 "raised_on": 1,
                 "priority": 1,
-                "current_status": 1
+                "current_status": 1,
+                "qa_status":1,
+                "dev_status":1
             }
         }
 

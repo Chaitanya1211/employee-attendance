@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { EmployeeSidebar } from "./EmployeeSidebar";
 import { Link, useParams } from 'react-router-dom';
 import axios from "axios";
+import { Priority, Status } from "../../helper/priority";
+import { toISTLocaleString } from "../../helper/dates";
 
 export function SingleProject() {
     const { projectId } = useParams();
     const [token, setToken] = useState(localStorage.getItem('token') || '');
-    const [role, setRole] = useState();
     const [showBug, setShowBug] = useState(false);
     const [project, setProject] = useState([]);
     const [bugs, setBugs] = useState([]);
@@ -28,52 +29,6 @@ export function SingleProject() {
             console.log("Error :", error)
         })
     }, [])
-
-    function toISTLocaleString(date) {
-        if (!date) return 'N/A';
-        const options = {
-            timeZone: 'Asia/Kolkata',
-            day: 'numeric',
-            month: 'short', // 'short' will give the abbreviated month name
-            year: '2-digit',
-            hour: 'numeric',
-            minute: 'numeric',
-            hour12: true // use 12-hour format
-        };
-        return new Date(date).toLocaleString('en-IN', options);
-    }
-
-    function renderPriority(priority) {
-        if (!priority) return "N/A";
-
-        switch (priority) {
-            case "HIGH":
-                return <span class="badge bg-danger">HIGH</span>
-            case "MEDIUM":
-                return <span class="badge bg-warning">MEDIUM</span>
-            case "LOW":
-                return <span class="badge bg-success">LOW</span>
-        }
-
-    }
-    function renderStatus(status) {
-        if (!status) return <span class="badge bg-info">N/A</span>;
-
-        switch (status) {
-            case "OPEN":
-                return <span class="badge bg-danger">OPEN</span>
-            case "RECHECKING":
-                return <span class="badge bg-info">RECHECKING</span>
-            case "CLOSED":
-                return <span class="badge bg-dark">CLOSED</span>
-            case "INVALID":
-                return <span class="badge bg-primary">INVALID</span>
-            case "INPROGRESS":
-                return <span class="badge bg-warning">INPROGRESS</span>
-            case "DONE":
-                return <span class="badge bg-succeess">DONE</span>
-        }
-    }
 
     return (
         <>
@@ -299,10 +254,12 @@ export function SingleProject() {
                                                         </div>
                                                     </div>
                                                 </td>
+                                                {/* <td>{toISTLocaleString(bug.raised_on)}</td> */}
                                                 <td>{toISTLocaleString(bug.raised_on)}</td>
                                                 <td>{bug.latest_update ?? "N/A"}</td>
-                                                <td>{renderStatus(bug.status)}</td>
-                                                <td>{renderPriority(bug.priority)}</td>
+                                                {/* <td>{renderStatus(bug.status)}</td> */}
+                                                <td>{Status(bug.status)}</td>
+                                                <td>{Priority(bug.priority)}</td>
                                                 <td>
                                                     <div class="avatar-group">
                                                         <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>
