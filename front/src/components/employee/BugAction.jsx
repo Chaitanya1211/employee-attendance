@@ -10,6 +10,9 @@ export function BugAction() {
     const [bug, setBug] = useState([]);
     const [token, setToken] = useState(localStorage.getItem("token") || "");
     const [bugImages, setBugImages] = useState([]);
+    const [allComments, setAllComments] = useState([]);
+    const [showComment, setShowComment] = useState(false);
+    const [comment, setComment] = useState('');
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/bug/${bugId}`,
@@ -18,11 +21,11 @@ export function BugAction() {
                 "token": token
             }
         }).then((response) => {
-            console.log("Respones :", response)
             if (response.status === 200) {
                 setBug(response?.data?.bug[0]);
                 setBugImages(response.data.bug[0].images);
-                console.log("Bug images", bugImages)
+                setAllComments(response.data.comments);
+                console.log("Bug :", response.data)
             }
         }).catch((error) => {
             console.error("Error :", error)
@@ -33,6 +36,40 @@ export function BugAction() {
             }
         })
     }, [])
+
+    const addInput = () => {
+        setShowComment(true);
+    }
+    const saveComment = () => {
+        const commentBody = {
+            "bugId": bugId,
+            "comment": comment
+        }
+        console.log(commentBody);
+        axios({
+            url: "http://localhost:8080/employee/addComment",
+            method: "POST",
+            data: commentBody,
+            headers: {
+                "Content-Type": "application/json",
+                "token": token
+            }
+        }).then((response) => {
+            if(response.status === 201){
+                console.log("Comment added successfully");
+                setAllComments(response.data.comments);
+                setShowComment(false);
+            }
+            console.log(response.data);
+        }).catch((error) => {
+            console.log("Error : ", error);
+            if(response.error && response.error.status === 500){
+                console.log("Error");
+                setAllComments(response.data.comments);
+                setShowComment(false);
+            }
+        })
+    }
     return (
         <>
             <div className="d-flex">
@@ -70,7 +107,7 @@ export function BugAction() {
                                                                         {
                                                                             bugImages.map((image, index) => {
                                                                                 return (
-                                                                                    <div class={index== 0 ? "tab-pane fade show active" :"tab-pane fade"} id={`product-${index+1}`} role="tabpanel" aria-labelledby={`product-${index+1}-tab`}>
+                                                                                    <div class={index == 0 ? "tab-pane fade show active" : "tab-pane fade"} id={`product-${index + 1}`} role="tabpanel" aria-labelledby={`product-${index + 1}-tab`}>
                                                                                         <div>
                                                                                             <img src={image} alt="" class="img-fluid mx-auto d-block" />
                                                                                         </div>
@@ -135,23 +172,46 @@ export function BugAction() {
                                         </div>
 
                                         <div class="mt-5">
-                                            <h5>Comments :</h5>
-
-                                            <div class="d-flex py-3 border-bottom">
-                                                <div class="flex-shrink-0 me-3">
-                                                    <img src="assets/images/users/avatar-2.jpg" class="avatar-xs rounded-circle" alt="img" />
-                                                </div>
-
+                                            <h5>Comments</h5>
+                                            <div class="d-flex">
                                                 <div class="flex-grow-1">
-                                                    No comments
-                                                    <ul class="list-inline float-sm-end mb-sm-0">
+                                                    {allComments.length > 0 ? <>
+
+                                                        {allComments.map((comment, index) => {
+                                                            return (
+                                                                <div class="d-flex py-3 border-bottom">
+                                                                    <div class="flex-shrink-0 me-3">
+                                                                        <img src={comment.employee.profileImg} class="avatar-xs rounded-circle" alt="img" />
+                                                                    </div>
+
+                                                                    <div class="flex-grow-1">
+                                                                        <h5 class="mb-1 font-size-15">{comment.employee.firstName + " " + comment.employee.lastName}</h5>
+                                                                        <p class="text-muted mb-2">{comment.comment ?? ""}</p>
+                                                                        <div class="text-muted font-size-12"><i class="far fa-calendar-alt text-primary me-1"></i>{toISTLocaleString(comment.at)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+
+                                                    </> : <h4> No comments yet </h4>}
+                                                    <ul class="list-inline float-sm-end mb-sm-0 my-2">
                                                         <li class="list-inline-item">
-                                                            <a href="javascript: void(0);"><i class="far fa-comment-dots me-1"></i> Comment</a>
+                                                            <a href="javascript: void(0);" onClick={addInput}><i class="far fa-comment-dots me-1"></i> Comment</a>
                                                         </li>
                                                     </ul>
-                                                    <div class="text-muted font-size-12"><i class="far fa-calendar-alt text-primary me-1"></i> 5 hrs ago</div>
                                                 </div>
                                             </div>
+                                            {showComment && <>
+                                                <form class="my-3" >
+                                                    <div class="hstack gap-3">
+                                                        <input class="form-control me-auto" type="text" placeholder="Add your comment here..."
+                                                            aria-label="Add your comment here..." onChange={(e) => setComment(e.target.value)} />
+                                                        <button type="button" class="btn btn-primary" onClick={saveComment}>Submit</button>
+                                                        <div class="vr"></div>
+                                                        <button type="reset" class="btn btn-outline-danger">Reset</button>
+                                                    </div>
+                                                </form>
+                                            </>}
                                         </div>
                                     </div>
                                 </div>

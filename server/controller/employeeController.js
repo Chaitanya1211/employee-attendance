@@ -315,7 +315,7 @@ async function allEmployees(req, res) {
 }
 
 async function bugDetails(req, res) {
-    // const bugId = req.params.bugId;
+    const tempBugId = req.params.bugId;
     const bugId = new mongoose.Types.ObjectId(req.params.bugId);
     console.log("bud Id" , bugId);
     try {
@@ -363,7 +363,8 @@ async function bugDetails(req, res) {
 
         ]);
         if (bug.length != 0) {
-            res.status(200).json({ message: "Bug found", bug: bug })
+            const comments = await bugComments(tempBugId);
+            res.status(200).json({ message: "Bug found", bug: bug, comments : comments })
         } else {
             res.status(404).json({ message: "Bug not found" });
         }
@@ -374,13 +375,15 @@ async function bugDetails(req, res) {
 }
 
 async function addComment(req,res){
+    const {bugId} = req.body;
     const email = req.user.email;
     try{
         const newComment = await Comment.create({...req.body,by:email})
+        const comments = await bugComments(bugId);
         if(newComment){
-            res.status(201).json({message : "Comment addded successfully"})
+            res.status(201).json({message : "Comment addded successfully", comments:comments})
         }else{
-            res.status(500).json({ message:"Comment addition unsuccessfull", error: 'Internal server error' });
+            res.status(500).json({ message:"Comment addition unsuccessfull", error: 'Internal server error', comments:comments });
         }
     }catch(error){
         console.error('Internal server error', error);
@@ -391,6 +394,22 @@ async function addComment(req,res){
 async function getAllComments(req,res){
     const bugId = req.params.bugId;
     try{
+        const comments = await bugComments(bugId);
+        if(comments.length !=0){
+            // comments present
+            res.status(200).json({message:"Comments present", comments:comments});
+        }else{
+            // no comments avaiblable
+            res.status(404).json({message:"Comments not present", comments:comments})
+        }
+
+    }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' }); 
+    }
+}
+async function bugComments(bugId){
+    // const bugId = req.params.bugId;
         const allComments = await Comment.aggregate([
             {
                 $match:{
@@ -408,6 +427,7 @@ async function getAllComments(req,res){
                 $unwind:"$employee"
             },{
                 $project:{
+                    "bugId" : 1,
                     "comment" : 1,
                     "employee.firstName" : 1,
                     "employee.lastName" : 1,
@@ -416,16 +436,8 @@ async function getAllComments(req,res){
                 }
             }
         ]);
-        console.log("All comments :", allComments)
-        if(allComments){
-            res.status(200).json({message:"Comments found", comments : allComments});
-        }else{
-            res.status(404).json({message:"Comments not present found", comments : allComments});
-        }
-    }catch(error){
-        console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+        return allComments;
+    
 }
 // No route functions
 function getCurrentDate() {
