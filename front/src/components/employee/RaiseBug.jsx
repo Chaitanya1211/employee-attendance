@@ -6,13 +6,16 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
+import SweetAlert from 'react-bootstrap-sweetalert';
 export function RaiseBug() {
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const { register, handleSubmit, formState: { errors }, setValue } = useForm({
         resolver: yupResolver(bugSchema)
     });
     const [employees, setEmployees] = useState([]);
-
+    const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+    const [showErrorAlert, setShowErrorAlert] = useState(false);
+    const [disableBtn, setDisableBtn] = useState(false);
     useEffect(() => {
         axios({
             url: "http://localhost:8080/employee/allEmployees",
@@ -37,65 +40,92 @@ export function RaiseBug() {
 
     const { projectId } = useParams();
     function onFormSubmit(data) {
-        const bugBody = {...data, projectId : projectId}
-        console.log("Bug body:",bugBody);
+        setDisableBtn(true);
+        const bugBody = { ...data, projectId: projectId }
         axios({
-            url : "http://localhost:8080/employee/newBug",
-            method :"POST",
-            headers:{
+            url: "http://localhost:8080/employee/newBug",
+            method: "POST",
+            headers: {
                 "Content-Type": "multipart/form-data",
-                "token":token
+                "token": token
             },
-            data : bugBody
-        }).then((response)=>{
-            console.log("response" ,response)
-        }).catch((error)=>{
+            data: bugBody
+        }).then((response) => {
+            console.log("response", response);
+            setShowSuccessAlert(true);
+            setDisableBtn(false);
+        }).catch((error) => {
             console.log("Error :", error)
+            setShowErrorAlert(true);
+            setDisableBtn(false);
         })
-        console.log(data)
     }
     function onErrors(errors) {
         console.log(errors)
     }
+    const onConfirm = () => {
+        window.location.replace(`http://localhost:5173/project/${projectId}`)
+    };
+    const hideAlert = () => {
+        // Handle hideAlert action
+        setShowErrorAlert(false)
+    };
 
     const [files, setFiles] = useState([]);
 
     const { getRootProps, getInputProps } = useDropzone({
-      accept: 'image/*', // specify file types if needed
-      onDrop: (acceptedFiles) => {
-        setValue('images', acceptedFiles);
-        setFiles(prevFiles => [
-          ...prevFiles,
-          ...acceptedFiles.map(file => Object.assign(file, {
-            preview: URL.createObjectURL(file)
-          }))
-        ]);
-      },
-      multiple: true
+        accept: 'image/*', // specify file types if needed
+        onDrop: (acceptedFiles) => {
+            setValue('images', acceptedFiles);
+            setFiles(prevFiles => [
+                ...prevFiles,
+                ...acceptedFiles.map(file => Object.assign(file, {
+                    preview: URL.createObjectURL(file)
+                }))
+            ]);
+        },
+        multiple: true
     });
-  
+
     useEffect(() => {
-      return () => {
-        files.forEach(file => URL.revokeObjectURL(file.preview));
-      };
+        return () => {
+            files.forEach(file => URL.revokeObjectURL(file.preview));
+        };
     }, [files]);
-  
+
     const removeFile = (fileName) => {
-      setFiles(files.filter(file => file.name !== fileName));
+        setFiles(files.filter(file => file.name !== fileName));
     };
-  
+
     const renderFiles = () => files.map(file => (
-      <div key={file.name} style={{ display: 'flex', alignItems: 'center', margin: '10px 0' }}>
-        {file.type.startsWith('image/') && <img src={file.preview} alt={file.name} width="50px" style={{ marginRight: '10px' }} />}
-        <p style={{ margin: 0 }}>{file.name}</p>
-        <button onClick={() => removeFile(file.name)} style={{ marginLeft: '10px' }}>Remove</button>
-      </div>
+        <div key={file.name} style={{ display: 'flex', alignItems: 'center', margin: '10px 0' }}>
+            {file.type.startsWith('image/') && <img src={file.preview} alt={file.name} width="50px" style={{ marginRight: '10px' }} />}
+            <p style={{ margin: 0 }}>{file.name}</p>
+            <button onClick={() => removeFile(file.name)} style={{ marginLeft: '10px' }}>Remove</button>
+        </div>
     ));
 
-    
+
 
     return (
         <>
+            <SweetAlert
+                success
+                title="Bug Raised"
+                show={showSuccessAlert}
+                onConfirm={onConfirm}>
+                The bug has been raised successfully
+            </SweetAlert>
+
+            <SweetAlert
+                danger
+                title="Internal Server Error"
+                show={showErrorAlert}
+                onConfirm={hideAlert}
+            >
+                We are facing some internal errors. Please try again later
+            </SweetAlert>
+
             <div className="d-flex">
                 <div className="col-lg-2 position-fixed">
                     <EmployeeSidebar />
@@ -211,8 +241,7 @@ export function RaiseBug() {
                                             </div>
                                         </div>
                                     </div>
-
-                                    <button type="submit" class="btn btn-primary float-end">Create</button>
+                                    <button type="submit" class="btn btn-primary float-end" disabled={disableBtn}>Create</button>
                                 </div>
                             </div>
                         </form>
