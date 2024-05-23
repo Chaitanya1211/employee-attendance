@@ -44,3 +44,22 @@
 .clock{
     font-size: 35px;
 }
+#snackBarSuccess,
+#snackBarError,
+#snackBarDelete {
+    visibility: visible;
+    min-width: 250px;
+    box-shadow: 0px 0 30px rgba(1, 41, 112, 0.1);
+    color: white;
+    text-align: center;
+    border-radius: 2px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    top: 4%;
+    right: 4%;
+    font-weight: 600;
+}
+#snackBarSuccess {
+    background-color: #5cb85c;
+}

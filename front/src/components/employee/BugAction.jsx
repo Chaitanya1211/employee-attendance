@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import axios from "axios";
 import { Priority, Status } from "../../helper/priority";
 import { toISTLocaleString } from "../../helper/dates";
-
+import { useForm } from "react-hook-form";
 export function BugAction() {
     const { bugId } = useParams();
     const [bug, setBug] = useState([]);
@@ -13,6 +13,9 @@ export function BugAction() {
     const [allComments, setAllComments] = useState([]);
     const [showComment, setShowComment] = useState(false);
     const [comment, setComment] = useState('');
+    const [role, setRole] = useState('');
+    const { register, handleSubmit, formState: { errors } } = useForm();
+    const [isSuccess, setIsSuccess] = useState(false);
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/bug/${bugId}`,
@@ -25,6 +28,7 @@ export function BugAction() {
                 setBug(response?.data?.bug[0]);
                 setBugImages(response.data.bug[0].images);
                 setAllComments(response.data.comments);
+                setRole(response.data.role)
                 console.log("Bug :", response.data)
             }
         }).catch((error) => {
@@ -36,7 +40,6 @@ export function BugAction() {
             }
         })
     }, [])
-
     const addInput = () => {
         setShowComment(true);
     }
@@ -45,7 +48,6 @@ export function BugAction() {
             "bugId": bugId,
             "comment": comment
         }
-        console.log(commentBody);
         axios({
             url: "http://localhost:8080/employee/addComment",
             method: "POST",
@@ -55,7 +57,7 @@ export function BugAction() {
                 "token": token
             }
         }).then((response) => {
-            if(response.status === 201){
+            if (response.status === 201) {
                 console.log("Comment added successfully");
                 setAllComments(response.data.comments);
                 setShowComment(false);
@@ -63,15 +65,55 @@ export function BugAction() {
             console.log(response.data);
         }).catch((error) => {
             console.log("Error : ", error);
-            if(response.error && response.error.status === 500){
+            if (response.error && response.error.status === 500) {
                 console.log("Error");
                 setAllComments(response.data.comments);
                 setShowComment(false);
             }
         })
     }
+
+    const onSubmitForm = (data) => {
+        const updateBody = { ...data, bugId: bugId };
+        console.log(updateBody);
+        axios({
+            url: "http://localhost:8080/employee/bug/updateStatus",
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "token": token
+            },
+            data: updateBody
+        }).then((response) => {
+            console.log(response);
+            if (response.status === 200) {
+                // success
+                setIsSuccess(true);
+                const timer = setTimeout(() => {
+                    setIsSuccess(false);
+                }, 2000);
+                return () => clearTimeout(timer);
+            }
+        }).catch((error) => {
+            console.log(error);
+            if (error.response.status === 500) {
+                // error
+            }
+        })
+    }
+    const onErrors = (error) => {
+        console.log(error);
+    }
     return (
         <>
+        {isSuccess && 
+            <div id="snackBarSuccess">
+                <div class="d-flex align-items-center">
+                    <i class="fa-solid fa-circle-check mr-3"></i>
+                    <span>Status updated successfully</span>
+                </div>
+            </div>
+        }
             <div className="d-flex">
                 <div className="col-lg-2 position-fixed">
                     <EmployeeSidebar />
@@ -120,58 +162,117 @@ export function BugAction() {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </> : <>NO images</>}
+                                                    </> : <><h5 class="text-center">No Images available</h5></>}
                                             </div>
 
                                             <div class="col-xl-6">
-                                                <div class="mt-4 mt-xl-3">
-                                                    <h4 class="mt-1 mb-3">{bug.title ?? ""}</h4>
-
-                                                    <p class="text-muted mb-4">{bug.description ?? ""}</p>
+                                                <div className="row">
+                                                    <div className="col-lg-8">
+                                                        <div class="mt-4 mt-xl-3">
+                                                            <h4 class="mt-1 mb-3">{bug.title ?? ""}</h4>
+                                                            <p class="text-muted mb-4">{bug.description ?? ""}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-lg-4">
+                                                        <div class="py-2 border-bottom">
+                                                            <h6 class="mb-1">Priority</h6>
+                                                            {Priority(bug.priority)}
+                                                        </div>
+                                                        <div class="py-2 border-bottom">
+                                                            <h6 class="mb-1">QA Status</h6>
+                                                            {Status(bug.qa_status)}
+                                                        </div>
+                                                        <div class="py-2 border-bottom">
+                                                            <h6 class="mb-1">Developer status</h6>
+                                                            {Status(bug.dev_status)}
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-lg-12 mt-3">
+                                                        <div className="row">
+                                                            <div className="col-lg-6">
+                                                                <h6 className="mb-2">Raised By</h6>
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="avatar-sm rounded p-1">
+                                                                        <img src={bug.raisedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                    </div>
+                                                                    <div class="ps-3">
+                                                                        <h5 class="text-truncate font-size-14 m-0">
+                                                                            <a href="javascript: v  oid(0);" class="text-dark">{bug.raisedByName + " " + bug.raisedBylastName}</a>
+                                                                        </h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-lg-6">
+                                                                <h6 className="mb-2">Assigned To</h6>
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="avatar-sm rounded p-1">
+                                                                        <img src={bug.assignedToProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                    </div>
+                                                                    <div class="ps-3">
+                                                                        <h5 class="text-truncate font-size-14 m-0">
+                                                                            <a href="javascript: v  oid(0);" class="text-dark">{bug.assignedToName + " " + bug.assignedTolastName}</a>
+                                                                        </h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="mt-5">
-                                            <h5 class="mb-3">Details :</h5>
+                                        <div class="row mt-4">
+                                            <div class="col-lg-12">
+                                                {/* <div class="card"> */}
+                                                <div class="card-body">
+                                                    <h5 class="card-title mb-3">Update Status</h5>
+                                                    <form class="row row-cols-lg-auto g-3 align-items-center justify-content-evenly" onSubmit={handleSubmit(onSubmitForm, onErrors)}>
+                                                        {/* Latest update */}
+                                                        <div class="col-lg-3">
+                                                            <h6>Latest Update</h6>
+                                                            {bug.updatedBy != null ? <>
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="avatar-sm bg-light rounded p-2">
+                                                                        <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                    </div>
+                                                                    <div class="ps-3">
+                                                                        <h5 class="text-truncate font-size-14 m-0">
+                                                                            <a href="javascript: v  oid(0);" class="text-dark">{bug.updatedByName + " " + bug.updatedByLastName}</a>
+                                                                        </h5>
+                                                                        <p class="text-muted mb-0">{Status(bug.current_status)}</p>
+                                                                        <small class="text-muted mb-0">{toISTLocaleString(bug.latest_update)}</small>
+                                                                    </div>
+                                                                </div>
+                                                            </> : <>N/A</>}
+                                                        </div>
 
-                                            <div class="table-responsive">
-                                                <table class="table mb-0 table-bordered">
-                                                    <tbody>
-                                                        <tr>
-                                                            <th scope="row" style={{ "width": "200px" }}>Priority</th>
-                                                            <td>{Priority(bug.priority)}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th scope="row">QA Status</th>
-                                                            <td>{Status(bug.qa_status)}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th scope="row">Dev Status</th>
-                                                            <td>{Status(bug.dev_status)}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th scope="row">Latest Update</th>
-                                                            <td>{toISTLocaleString(bug.latest_update)}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th scope="row">Raised On</th>
-                                                            <td>{toISTLocaleString(bug.raised_on)}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th scope="row">Raised By</th>
-                                                            <td>{bug.raisedByName ?? ""}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th scope="row">Assigned To</th>
-                                                            <td>{bug.assignedToName ?? ""}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
+                                                        {/* QA status */}
+                                                        <div class="col-lg-3">
+                                                            <h6>QA Status</h6>
+                                                            <select class="form-select" disabled={role === "Developer"} {...register('qa_status')}>
+                                                                <option value="OPEN" selected={bug.qa_status === "OPEN"}>OPEN</option>
+                                                                <option value="RECHECKING" selected={bug.qa_status === "RECHECKING"}>RECHECKING</option>
+                                                                <option value="CLOSED" selected={bug.qa_status === "CLOSED"}>CLOSED</option>
+                                                            </select>
+                                                        </div>
+                                                        {/* Developer status */}
+                                                        <div class="col-lg-3">
+                                                            <h6>Developer Status</h6>
+                                                            <select class="form-select" disabled={role === "Tester"} {...register('dev_status')} >
+                                                                <option value="INVALID" selected={bug.dev_status === "N/A"}>N/A</option>
+                                                                <option value="INVALID" selected={bug.dev_status === "INVALID"}>INVALID</option>
+                                                                <option value="INPROGRESS" selected={bug.dev_status === "INPROGRESS"}>INPROGRESS</option>
+                                                                <option value="DONE" selected={bug.dev_status === "INPROGRESS"}>DONE</option>
+                                                            </select>
+                                                        </div>
+                                                        <button type="submit" class="btn btn-primary w-md">Submit</button>
+                                                    </form>
+
+                                                </div>
+                                                {/* </div> */}
                                             </div>
                                         </div>
-
-                                        <div class="mt-5">
+                                        <div class="mt-4">
                                             <h5>Comments</h5>
                                             <div class="d-flex">
                                                 <div class="flex-grow-1">

@@ -14,7 +14,6 @@ cloudinary.config({
     api_secret: process.env.API_SECRET
 });
 
-
 async function register(req, res) {
     try {
         const { email, password } = req.body;
@@ -316,6 +315,7 @@ async function allEmployees(req, res) {
 
 async function bugDetails(req, res) {
     const tempBugId = req.params.bugId;
+    const role = req.user.role;
     const bugId = new mongoose.Types.ObjectId(req.params.bugId);
     console.log("bud Id" , bugId);
     try {
@@ -345,28 +345,47 @@ async function bugDetails(req, res) {
         },{
             $unwind : "$assigned_employee"
         },{
+            $lookup: {
+                from: "employees",
+                localField: "updated_by",
+                foreignField: "email",
+                as: 'updated_employee'
+            }
+        },{
+            $unwind : {
+                path : "$updated_employee",
+                preserveNullAndEmptyArrays: true
+            }
+        },{
             $project:{
                 "title": 1,
                 "description": 1,
                 "images":1,
                 "raisedByName": "$raising_employee.firstName",
+                "raisedBylastName": "$raising_employee.lastName",
                 "raisedByProfile": "$raising_employee.profileImg",
                 "assignedToName": "$assigned_employee.firstName",
+                "assignedTolastName": "$assigned_employee.lastName",
                 "assignedToProfile": "$assigned_employee.profileImg",
                 "raised_on": 1,
                 "priority": 1,
                 "current_status": 1,
                 "qa_status":1,
-                "dev_status":1
+                "dev_status":1,
+                "updatedBy" : 1,
+                "updatedByName" : "$updated_employee.firstName",
+                "updatedByLastName" : "$updated_employee.lastName",
+                "updatedByProfile" : "$updated_employee.profileImg",
+                "updatedAt":1,
+                "latest_update":1
             }
         }
-
         ]);
         if (bug.length != 0) {
             const comments = await bugComments(tempBugId);
-            res.status(200).json({ message: "Bug found", bug: bug, comments : comments })
+            res.status(200).json({ message: "Bug found", bug: bug, comments : comments, role:role })
         } else {
-            res.status(404).json({ message: "Bug not found" });
+            res.status(404).json({ message: "Bug not found", role:role });
         }
     } catch (error) {
         console.error('Internal server error', error);
@@ -408,6 +427,46 @@ async function getAllComments(req,res){
         res.status(500).json({ error: 'Internal server error' }); 
     }
 }
+
+async function updateBugStatus(req,res){
+    const role=req.user.role;
+    const email = req.user.email;
+    const {bugId} = req.body;
+    const currentDateTime=getISTDate();
+    const updatedData={
+        updated_by : email,
+        latest_update : currentDateTime
+    };
+    const castedId = new mongoose.Types.ObjectId(bugId);
+    try{
+        if(role=="Developer"){
+            // developer
+            const {dev_status} = req.body;
+            
+            const bugUpdate = await Bug.updateOne({_id:castedId},{$set : {...updatedData, dev_status:dev_status,current_status:dev_status}});
+            if(bugUpdate){
+                res.status(200).json({message: "Status updated successfully", updated:bugUpdate});
+            }else{
+                res.status(500).json({message : "Not updated"})
+            }
+        }else{
+            // tester
+            const {qa_status} = req.body;
+            const bugUpdate = await Bug.updateOne({_id:castedId},{$set : {...updatedData, qa_status:qa_status, current_status:qa_status}});
+            if(bugUpdate){
+                res.status(200).json({message: "Status updated successfully", updated:bugUpdate});
+            }else{
+                res.status(500).json({message : "Not updated"})
+            }
+        }
+    }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' }); 
+    }
+    
+}
+// No route functions
+
 async function bugComments(bugId){
     // const bugId = req.params.bugId;
         const allComments = await Comment.aggregate([
@@ -439,7 +498,7 @@ async function bugComments(bugId){
         return allComments;
     
 }
-// No route functions
+
 function getCurrentDate() {
     const currentDate = new Date();
     const isoDate = currentDate.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
@@ -532,6 +591,14 @@ async function getProjectBugs(projectId) {
     }
 }
 
+function getISTDate() {
+    const now = new Date();
+    const utcDate = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST offset is UTC+5:30
+    const istDate = new Date(utcDate.getTime() + istOffset);
+    return istDate;
+}
+
 exports.register = register;
 exports.login = login;
 exports.getDetails = getDetails;
@@ -547,3 +614,4 @@ exports.allEmployees = allEmployees;
 exports.bugDetails = bugDetails;
 exports.addComment = addComment;
 exports.getAllComments = getAllComments;
+exports.updateBugStatus = updateBugStatus;

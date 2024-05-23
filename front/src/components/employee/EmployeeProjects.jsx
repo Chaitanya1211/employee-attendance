@@ -84,15 +84,15 @@ export function EmployeeProjects() {
                                                                     </td>
                                                                     <td>
                                                                         <div class="d-flex align-items-center">
-                                                                        <div class="avatar-sm bg-light rounded p-2">
-                                                                            <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle"/>
-                                                                        </div>
-                                                                        <div class="ps-3">
-                                                                            <h5 class="text-truncate font-size-14">
-                                                                                <a href="javascript: void(0);" class="text-dark">{project.projectName ?? ""}</a>
-                                                                            </h5>
-                                                                            <p class="text-muted mb-0">{project.projectDesc ?? " "}</p>
-                                                                        </div>
+                                                                            <div class="avatar-sm bg-light rounded p-2">
+                                                                                <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                            </div>
+                                                                            <div class="ps-3">
+                                                                                <h5 class="text-truncate font-size-14">
+                                                                                    <a href="javascript: void(0);" class="text-dark">{project.projectName ?? ""}</a>
+                                                                                </h5>
+                                                                                <p class="text-muted mb-0">{project.projectDesc ?? " "}</p>
+                                                                            </div>
                                                                         </div>
                                                                     </td>
                                                                     <td>13</td>
@@ -101,9 +101,9 @@ export function EmployeeProjects() {
                                                                     <td>1</td>
                                                                     <td>
                                                                         <Link to={`/project/${project._id}`}>
-                                                                        <button class="btn btn-primary">View More</button>
+                                                                            <button class="btn btn-primary">View More</button>
                                                                         </Link>
-                                                                        
+
                                                                     </td>
                                                                 </tr>
 

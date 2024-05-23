@@ -258,7 +258,7 @@ export function SingleProject() {
                                                 <td>{toISTLocaleString(bug.raised_on)}</td>
                                                 <td>{bug.latest_update ?? "N/A"}</td>
                                                 {/* <td>{renderStatus(bug.status)}</td> */}
-                                                <td>{Status(bug.status)}</td>
+                                                <td>{Status(bug.current_status)}</td>
                                                 <td>{Priority(bug.priority)}</td>
                                                 <td>
                                                     <div class="avatar-group">

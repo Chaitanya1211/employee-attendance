@@ -59,7 +59,7 @@ const bugSchema = mongoose.Schema({
         default: getISTDate
     },
     latest_update:{
-        type : Date
+        type:String
     },
     updated_by :{
         type:String,
