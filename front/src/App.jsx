@@ -28,7 +28,7 @@ function App() {
         <Route path='/home' element={<EmployeeHome />} />
         <Route path='/profile' element={<EmployeeProfile />} />
         <Route path='/projects' element={<EmployeeProjects />} />
-        <Route path='/project/:projectId' element={<SingleProject />} />
+        <Route path='/projects/:projectId' element={<SingleProject />} />
         <Route path='/raiseBug/:projectId' element={<RaiseBug />} />
         <Route path='/bug/:bugId' element={<BugAction />} />
         {/* Admin Routes */}

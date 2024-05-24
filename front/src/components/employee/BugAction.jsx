@@ -5,6 +5,7 @@ import axios from "axios";
 import { Priority, Status } from "../../helper/priority";
 import { toISTLocaleString } from "../../helper/dates";
 import { useForm } from "react-hook-form";
+import defaultImage from "../../assets/defaultImage.jpg";
 export function BugAction() {
     const { bugId } = useParams();
     const [bug, setBug] = useState([]);
@@ -193,7 +194,7 @@ export function BugAction() {
                                                                 <h6 className="mb-2">Raised By</h6>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm rounded p-1">
-                                                                        <img src={bug.raisedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                        <img src={bug.raisedByProfile ?? defaultImage} alt="Project Icon" class="img-fluid rounded-circle" />
                                                                     </div>
                                                                     <div class="ps-3">
                                                                         <h5 class="text-truncate font-size-14 m-0">
@@ -206,7 +207,7 @@ export function BugAction() {
                                                                 <h6 className="mb-2">Assigned To</h6>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm rounded p-1">
-                                                                        <img src={bug.assignedToProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                        <img src={bug.assignedToProfile ?? defaultImage} alt="Project Icon" class="img-fluid rounded-circle" />
                                                                     </div>
                                                                     <div class="ps-3">
                                                                         <h5 class="text-truncate font-size-14 m-0">

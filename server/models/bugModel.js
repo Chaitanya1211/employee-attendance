@@ -64,6 +64,10 @@ const bugSchema = mongoose.Schema({
     updated_by :{
         type:String,
         ref : 'Employee'
+    },
+    isViewed:{
+        type:Boolean,
+        default:false
     }
 },{
     timestamps : true

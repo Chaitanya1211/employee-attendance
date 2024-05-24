@@ -64,7 +64,7 @@ export function RaiseBug() {
         console.log(errors)
     }
     const onConfirm = () => {
-        window.location.replace(`http://localhost:5173/project/${projectId}`)
+        window.location.replace(`http://localhost:5173/projects/${projectId}`)
     };
     const hideAlert = () => {
         // Handle hideAlert action

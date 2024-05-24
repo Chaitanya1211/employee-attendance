@@ -317,80 +317,87 @@ async function bugDetails(req, res) {
     const tempBugId = req.params.bugId;
     const role = req.user.role;
     const bugId = new mongoose.Types.ObjectId(req.params.bugId);
-    console.log("bud Id" , bugId);
-    try {
-        const bug = await Bug.aggregate([{
-            $match: {
-                _id: bugId
+    // mark as viewed
+    const isViewed = await markAsViewed(bugId);
+    if(isViewed){
+        try {
+            const bug = await Bug.aggregate([{
+                $match: {
+                    _id: bugId
+                }
+            },
+            {
+                $lookup: {
+                    from: "employees",
+                    localField: "raisedBy",
+                    foreignField: "email",
+                    as: "raising_employee"
+                }
+            },
+            {
+                $unwind : "$raising_employee"
+            },
+            {
+                $lookup:{
+                    from: "employees",
+                    localField: "assignedTo",
+                    foreignField: "email",
+                    as: 'assigned_employee'
+                }
+            },{
+                $unwind : "$assigned_employee"
+            },{
+                $lookup: {
+                    from: "employees",
+                    localField: "updated_by",
+                    foreignField: "email",
+                    as: 'updated_employee'
+                }
+            },{
+                $unwind : {
+                    path : "$updated_employee",
+                    preserveNullAndEmptyArrays: true
+                }
+            },{
+                $project:{
+                    "title": 1,
+                    "description": 1,
+                    "images":1,
+                    "raisedByName": "$raising_employee.firstName",
+                    "raisedBylastName": "$raising_employee.lastName",
+                    "raisedByProfile": "$raising_employee.profileImg",
+                    "assignedToName": "$assigned_employee.firstName",
+                    "assignedTolastName": "$assigned_employee.lastName",
+                    "assignedToProfile": "$assigned_employee.profileImg",
+                    "raised_on": 1,
+                    "priority": 1,
+                    "current_status": 1,
+                    "qa_status":1,
+                    "dev_status":1,
+                    "updatedBy" : 1,
+                    "updatedByName" : "$updated_employee.firstName",
+                    "updatedByLastName" : "$updated_employee.lastName",
+                    "updatedByProfile" : "$updated_employee.profileImg",
+                    "updatedAt":1,
+                    "latest_update":1
+                }
             }
-        },
-        {
-            $lookup: {
-                from: "employees",
-                localField: "raisedBy",
-                foreignField: "email",
-                as: "raising_employee"
+            ]);
+            if (bug.length != 0) {
+                const comments = await bugComments(tempBugId);
+                res.status(200).json({ message: "Bug found", bug: bug, comments : comments, role:role })
+            } else {
+                res.status(404).json({ message: "Bug not found", role:role });
             }
-        },
-        {
-            $unwind : "$raising_employee"
-        },
-        {
-            $lookup:{
-                from: "employees",
-                localField: "assignedTo",
-                foreignField: "email",
-                as: 'assigned_employee'
-            }
-        },{
-            $unwind : "$assigned_employee"
-        },{
-            $lookup: {
-                from: "employees",
-                localField: "updated_by",
-                foreignField: "email",
-                as: 'updated_employee'
-            }
-        },{
-            $unwind : {
-                path : "$updated_employee",
-                preserveNullAndEmptyArrays: true
-            }
-        },{
-            $project:{
-                "title": 1,
-                "description": 1,
-                "images":1,
-                "raisedByName": "$raising_employee.firstName",
-                "raisedBylastName": "$raising_employee.lastName",
-                "raisedByProfile": "$raising_employee.profileImg",
-                "assignedToName": "$assigned_employee.firstName",
-                "assignedTolastName": "$assigned_employee.lastName",
-                "assignedToProfile": "$assigned_employee.profileImg",
-                "raised_on": 1,
-                "priority": 1,
-                "current_status": 1,
-                "qa_status":1,
-                "dev_status":1,
-                "updatedBy" : 1,
-                "updatedByName" : "$updated_employee.firstName",
-                "updatedByLastName" : "$updated_employee.lastName",
-                "updatedByProfile" : "$updated_employee.profileImg",
-                "updatedAt":1,
-                "latest_update":1
-            }
+        } catch (error) {
+            console.error('Internal server error', error);
+            res.status(500).json({ error: 'Internal server error' });
         }
-        ]);
-        if (bug.length != 0) {
-            const comments = await bugComments(tempBugId);
-            res.status(200).json({ message: "Bug found", bug: bug, comments : comments, role:role })
-        } else {
-            res.status(404).json({ message: "Bug not found", role:role });
-        }
-    } catch (error) {
-        console.error('Internal server error', error);
+    }else{
+        console.log("unable to mark viewed");
         res.status(500).json({ error: 'Internal server error' });
     }
+    
 }
 
 async function addComment(req,res){
@@ -576,7 +583,8 @@ async function getProjectBugs(projectId) {
                     "assignedToProfile": "$assigned_employee.profileImg",
                     "raised_on": 1,
                     "priority": 1,
-                    "current_status": 1
+                    "current_status": 1,
+                    "isViewed" :1
                 }
             }
         ])
@@ -588,6 +596,18 @@ async function getProjectBugs(projectId) {
     } catch (error) {
         console.log("Error in bugs :", error)
         return null;
+    }
+}
+
+async function markAsViewed(bugId){
+    const data = {
+        isViewed:true
+    }
+    const result = await Bug.updateOne({_id : bugId}, {$set:data});
+    if(result){
+        return true;
+    }else{
+        return false;
     }
 }
 

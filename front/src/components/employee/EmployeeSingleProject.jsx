@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import axios from "axios";
 import { Priority, Status } from "../../helper/priority";
 import { toISTLocaleString } from "../../helper/dates";
-
+import defaultImage from "../../assets/defaultImage.jpg";
 export function SingleProject() {
     const { projectId } = useParams();
     const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -21,6 +21,7 @@ export function SingleProject() {
         }).then((response) => {
             setProject(response.data.details[0]);
             setBugs(response.data.bugs)
+            console.log(response.data);
             console.log("Role :", response.data.role)
             if (response.data.role == "Tester") {
                 setShowBug(true);
@@ -213,7 +214,7 @@ export function SingleProject() {
                             {showBug &&
                                 <div class="col-sm-auto">
                                     <div class="text-sm-end">
-                                        <a href={`http://localhost:5173/raiseBug/${project._id}`} class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Raise Bug</a>
+                                        <a href={`http://localhost:5173/raiseBug/${project._id}`} class="btn btn-success btn-rounded" id="addProject-btn"><i class="fa-solid fa-bug me-2"></i> Raise Bug</a>
                                     </div>
                                 </div>
                             }
@@ -252,29 +253,31 @@ export function SingleProject() {
                                                             </h5>
                                                             <p class="text-muted mb-0 text-truncate" style={{ "width": "250px" }}>{bug.description ?? " "}</p>
                                                         </div>
+                                                        {!bug.isViewed && <>
+                                                        <span className="badge bg-danger" style={{"marginLeft":"auto", "alignSelf":"start"}}>New</span>
+                                                        </>
+                                                        }
                                                     </div>
                                                 </td>
-                                                {/* <td>{toISTLocaleString(bug.raised_on)}</td> */}
                                                 <td>{toISTLocaleString(bug.raised_on)}</td>
                                                 <td>{bug.latest_update ?? "N/A"}</td>
-                                                {/* <td>{renderStatus(bug.status)}</td> */}
                                                 <td>{Status(bug.current_status)}</td>
                                                 <td>{Priority(bug.priority)}</td>
                                                 <td>
                                                     <div class="avatar-group">
                                                         <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>
-                                                            <img src={bug.assignedToProfile} alt="" class="rounded-circle avatar-xs" />
+                                                            <img src={bug.assignedToProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
                                                         </a>
                                                         <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.raisedByName}>
-                                                            <img src={bug.raisedByProfile} alt="" class="rounded-circle avatar-xs" />
+                                                            <img src={bug.raisedByProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
                                                         </a>
                                                     </div>
                                                 </td>
                                                 <td><ul class="list-unstyled hstack gap-1 mb-0">
-                                                    <Link to={`/bug/${bug._id}`} > 
-                                                    <li data-bs-toggle="tooltip" data-bs-placement="top" title="View">
-                                                        <span class="btn btn-sm btn-soft-primary"><i class="mdi mdi-eye-outline"></i></span>
-                                                    </li>
+                                                    <Link to={`/bug/${bug._id}`} >
+                                                        <li data-bs-toggle="tooltip" data-bs-placement="top" title="View">
+                                                            <span class="btn btn-sm btn-soft-primary"><i class="fa-solid fa-pen"></i></span>
+                                                        </li>
                                                     </Link>
                                                 </ul></td>
                                             </tr>

@@ -2,7 +2,7 @@ import { EmployeeSidebar } from "./EmployeeSidebar";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-
+import sampleProject from "../../assets/sampleProject.jpg"
 export function EmployeeProjects() {
 
     const [token, getToken] = useState(localStorage.getItem('token') || '');
@@ -85,7 +85,7 @@ export function EmployeeProjects() {
                                                                     <td>
                                                                         <div class="d-flex align-items-center">
                                                                             <div class="avatar-sm bg-light rounded p-2">
-                                                                                <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                                <img src={project.projectImage ?? sampleProject} alt="Project Icon" class="img-fluid rounded-circle" />
                                                                             </div>
                                                                             <div class="ps-3">
                                                                                 <h5 class="text-truncate font-size-14">
@@ -100,14 +100,12 @@ export function EmployeeProjects() {
                                                                     <td>2</td>
                                                                     <td>1</td>
                                                                     <td>
-                                                                        <Link to={`/project/${project._id}`}>
+                                                                        <Link to={`/projects/${project._id}`}>
                                                                             <button class="btn btn-primary">View More</button>
                                                                         </Link>
 
                                                                     </td>
                                                                 </tr>
-
-
                                                             )
                                                         })}
                                                     </tbody>
