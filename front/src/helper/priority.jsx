@@ -26,6 +26,6 @@ export function Status(status){
             case "INPROGRESS":
                 return <span class="badge bg-warning">INPROGRESS</span>
             case "DONE":
-                return <span class="badge bg-succeess">DONE</span>
+                return <span class="badge bg-success">DONE</span>
         }
 }

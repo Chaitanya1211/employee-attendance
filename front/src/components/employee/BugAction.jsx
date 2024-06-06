@@ -231,7 +231,7 @@ export function BugAction() {
                                                         {/* Latest update */}
                                                         <div class="col-lg-3">
                                                             <h6>Latest Update</h6>
-                                                            {bug.updatedBy != null ? <>
+                                                            {bug.updated_by != null ? <>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm bg-light rounded p-2">
                                                                         <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
@@ -250,7 +250,7 @@ export function BugAction() {
                                                         {/* QA status */}
                                                         <div class="col-lg-3">
                                                             <h6>QA Status</h6>
-                                                            <select class="form-select" disabled={role === "Developer"} {...register('qa_status')}>
+                                                            <select class="form-select" disabled={role === "Developer" || bug.current_status==="CLOSED"} {...register('qa_status')}>
                                                                 <option value="OPEN" selected={bug.qa_status === "OPEN"}>OPEN</option>
                                                                 <option value="RECHECKING" selected={bug.qa_status === "RECHECKING"}>RECHECKING</option>
                                                                 <option value="CLOSED" selected={bug.qa_status === "CLOSED"}>CLOSED</option>
@@ -259,14 +259,13 @@ export function BugAction() {
                                                         {/* Developer status */}
                                                         <div class="col-lg-3">
                                                             <h6>Developer Status</h6>
-                                                            <select class="form-select" disabled={role === "Tester"} {...register('dev_status')} >
-                                                                <option value="INVALID" selected={bug.dev_status === "N/A"}>N/A</option>
+                                                            <select class="form-select" disabled={role === "Tester" || bug.current_status==="CLOSED"} {...register('dev_status')} >
                                                                 <option value="INVALID" selected={bug.dev_status === "INVALID"}>INVALID</option>
                                                                 <option value="INPROGRESS" selected={bug.dev_status === "INPROGRESS"}>INPROGRESS</option>
-                                                                <option value="DONE" selected={bug.dev_status === "INPROGRESS"}>DONE</option>
+                                                                <option value="DONE" selected={bug.dev_status === "DONE"}>DONE</option>
                                                             </select>
                                                         </div>
-                                                        <button type="submit" class="btn btn-primary w-md">Submit</button>
+                                                        <button type="submit" class="btn btn-primary w-md" disabled={bug.current_status === "CLOSED"}>Submit</button>
                                                     </form>
 
                                                 </div>

@@ -20,4 +20,5 @@ router.get('/bug/:bugId',auth,employee.bugDetails);
 router.post('/addComment',auth,employee.addComment);
 router.get('/bug/comments/:bugId',auth,employee.getAllComments);
 router.post('/bug/updateStatus',auth,employee.updateBugStatus);
+router.get('/project/getBugCount/:projectId',auth,employee.getStatusCount);
 module.exports = router

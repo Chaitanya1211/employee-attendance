@@ -5,11 +5,13 @@ import axios from "axios";
 import { Priority, Status } from "../../helper/priority";
 import { toISTLocaleString } from "../../helper/dates";
 import defaultImage from "../../assets/defaultImage.jpg";
+import { BugCounts } from "./employeeComponents/bugCount";
 export function SingleProject() {
     const { projectId } = useParams();
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [showBug, setShowBug] = useState(false);
     const [project, setProject] = useState([]);
+    const [countData, setCountData] = useState([]);
     const [bugs, setBugs] = useState([]);
     useEffect(() => {
         axios({
@@ -25,6 +27,22 @@ export function SingleProject() {
             console.log("Role :", response.data.role)
             if (response.data.role == "Tester") {
                 setShowBug(true);
+            }
+        }).catch((error) => {
+            console.log("Error :", error)
+        })
+    }, [])
+
+    useEffect(() => {
+        axios({
+            url: `http://localhost:8080/employee/project/getBugCount/${projectId}`,
+            method: "GET",
+            headers: {
+                "token": token
+            }
+        }).then((response) => {
+            if (response.status === 200) {
+                setCountData(response.data.count)
             }
         }).catch((error) => {
             console.log("Error :", error)
@@ -76,7 +94,7 @@ export function SingleProject() {
                                                         <div class="d-flex">
                                                             <div class="flex-grow-1">
                                                                 <p class="text-muted fw-medium">Total</p>
-                                                                <h4 class="mb-0">$16.2</h4>
+                                                                <h4 class="mb-0">{countData.total ?? ""}</h4>
                                                             </div>
 
                                                             <div class="flex-shrink-0 align-self-center">
@@ -96,7 +114,7 @@ export function SingleProject() {
                                                         <div class="d-flex">
                                                             <div class="flex-grow-1">
                                                                 <p class="text-muted fw-medium">Closed</p>
-                                                                <h4 class="mb-0">$16.2</h4>
+                                                                <h4 class="mb-0">{countData.closed ?? ""}</h4>
                                                             </div>
 
                                                             <div class="flex-shrink-0 align-self-center">
@@ -116,7 +134,7 @@ export function SingleProject() {
                             </div>
                             <div className="col-lg-5">
                                 <h4 class="mb-4 font-size-18">Bugs Overview</h4>
-                                <div className="row">
+                                {/* <div className="row">
                                     <div className="col-lg-6">
                                         <div class="card mini-stats-wid">
                                             <div class="card-body">
@@ -196,7 +214,8 @@ export function SingleProject() {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> */}
+                                <BugCounts projectId={projectId} token={token} ></BugCounts>
                             </div>
                         </div>
                         {/* Bugs grid */}
@@ -254,13 +273,26 @@ export function SingleProject() {
                                                             <p class="text-muted mb-0 text-truncate" style={{ "width": "250px" }}>{bug.description ?? " "}</p>
                                                         </div>
                                                         {!bug.isViewed && <>
-                                                        <span className="badge bg-danger" style={{"marginLeft":"auto", "alignSelf":"start"}}>New</span>
+                                                            <span className="badge bg-danger" style={{ "marginLeft": "auto", "alignSelf": "start" }}>New</span>
                                                         </>
                                                         }
                                                     </div>
                                                 </td>
                                                 <td>{toISTLocaleString(bug.raised_on)}</td>
-                                                <td>{bug.latest_update ?? "N/A"}</td>
+                                                <td>{bug.updated_by != null ? <>
+                                                    <div class="d-flex align-items-center">
+                                                                    <div class="avatar-sm bg-light rounded p-2">
+                                                                        <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                    </div>
+                                                                    <div class="ps-3">
+                                                                        <h5 class="text-truncate font-size-12 m-0">
+                                                                            <a href="javascript: v  oid(0);" class="text-dark">{bug.updatedByName + " " + bug.updatedByLastName}</a>
+                                                                        </h5>
+                                                                        <p class="text-muted mb-0">{Status(bug.current_status)}</p>
+                                                                        <small class="text-muted mb-0">{toISTLocaleString(bug.latest_update)}</small>
+                                                                    </div>
+                                                                </div>
+                                                </> : "N/A"}</td>
                                                 <td>{Status(bug.current_status)}</td>
                                                 <td>{Priority(bug.priority)}</td>
                                                 <td>

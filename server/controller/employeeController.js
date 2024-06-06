@@ -374,7 +374,7 @@ async function bugDetails(req, res) {
                     "current_status": 1,
                     "qa_status":1,
                     "dev_status":1,
-                    "updatedBy" : 1,
+                    "updated_by" : 1,
                     "updatedByName" : "$updated_employee.firstName",
                     "updatedByLastName" : "$updated_employee.lastName",
                     "updatedByProfile" : "$updated_employee.profileImg",
@@ -472,8 +472,33 @@ async function updateBugStatus(req,res){
     }
     
 }
-// No route functions
 
+async function getStatusCount(req,res){
+    const projectId = req.params.projectId;
+    const castedId = new mongoose.Types.ObjectId(projectId);
+    var counts={};
+    try{
+        const total = await Bug.countDocuments({projectId:castedId});
+        counts["total"] = total;
+        const closed = await Bug.countDocuments({ $and :[{current_status : "CLOSED"}, {projectId:castedId}]});
+        counts["closed"] = closed;
+        const open = await Bug.countDocuments({ $and :[{current_status : "OPEN"}, {projectId:castedId}]});
+        counts["open"] = open;
+        const done = await Bug.countDocuments({ $and :[{current_status : "DONE"}, {projectId:castedId}]});
+        counts["done"] = done;
+        const inprogress = await Bug.countDocuments({ $and :[{current_status : "INPROGRESS"}, {projectId:castedId}]});
+        counts["inprogress"] = inprogress;
+        const recheck = await Bug.countDocuments({ $and :[{current_status : "RECHECKING"}, {projectId:castedId}]});
+        counts["rechecking"] = recheck;
+        console.log(counts);
+        res.status(200).json({message:"Details found", count:counts})
+    }catch(error){
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' }); 
+    }
+}
+
+// No route functions
 async function bugComments(bugId){
     // const bugId = req.params.bugId;
         const allComments = await Comment.aggregate([
@@ -503,7 +528,6 @@ async function bugComments(bugId){
             }
         ]);
         return allComments;
-    
 }
 
 function getCurrentDate() {
@@ -573,6 +597,18 @@ async function getProjectBugs(projectId) {
                 }
             }, {
                 $unwind: "$assigned_employee"
+            },{
+                $lookup: {
+                    from: "employees",
+                    localField: "updated_by",
+                    foreignField: "email",
+                    as: 'updated_employee'
+                }
+            },{
+                $unwind : {
+                    path : "$updated_employee",
+                    preserveNullAndEmptyArrays: true
+                }
             }, {
                 $project: {
                     "title": 1,
@@ -584,10 +620,16 @@ async function getProjectBugs(projectId) {
                     "raised_on": 1,
                     "priority": 1,
                     "current_status": 1,
-                    "isViewed" :1
+                    "isViewed" :1,
+                    "updated_by" : 1,
+                    "updatedByName" : "$updated_employee.firstName",
+                    "updatedByLastName" : "$updated_employee.lastName",
+                    "updatedByProfile" : "$updated_employee.profileImg",
+                    "updatedAt":1,
+                    "latest_update":1
                 }
             }
-        ])
+        ]).sort({ latest_update: -1 });
         if (result) {
             return result;
         } else {
@@ -635,3 +677,4 @@ exports.bugDetails = bugDetails;
 exports.addComment = addComment;
 exports.getAllComments = getAllComments;
 exports.updateBugStatus = updateBugStatus;
+exports.getStatusCount = getStatusCount;
