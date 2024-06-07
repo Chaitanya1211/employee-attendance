@@ -13,6 +13,15 @@ export function SingleProject() {
     const [project, setProject] = useState([]);
     const [countData, setCountData] = useState([]);
     const [bugs, setBugs] = useState([]);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = bugs.slice(indexOfFirstItem, indexOfLastItem);
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/project/${projectId}`,
@@ -60,6 +69,7 @@ export function SingleProject() {
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-flex align-items-center justify-content-between">
+                                <i class="ri-arrow-left-s-line"></i>
                                     <h4 class="mb-0 font-size-18">Project overview</h4>
 
                                     <div class="page-title-right">
@@ -134,87 +144,6 @@ export function SingleProject() {
                             </div>
                             <div className="col-lg-5">
                                 <h4 class="mb-4 font-size-18">Bugs Overview</h4>
-                                {/* <div className="row">
-                                    <div className="col-lg-6">
-                                        <div class="card mini-stats-wid">
-                                            <div class="card-body">
-                                                <div class="d-flex">
-                                                    <div class="flex-grow-1">
-                                                        <p class="text-muted fw-medium">Current Open</p>
-                                                        <h4 class="mb-0">$16.2</h4>
-                                                    </div>
-
-                                                    <div class="flex-shrink-0 align-self-center">
-                                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                            <span class="avatar-title rounded-circle bg-primary">
-                                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-lg-6">
-                                        <div class="card mini-stats-wid">
-                                            <div class="card-body">
-                                                <div class="d-flex">
-                                                    <div class="flex-grow-1">
-                                                        <p class="text-muted fw-medium">Dev Done</p>
-                                                        <h4 class="mb-0">$16.2</h4>
-                                                    </div>
-                                                    <div class="flex-shrink-0 align-self-center">
-                                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                            <span class="avatar-title rounded-circle bg-primary">
-                                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-lg-6">
-                                        <div class="card mini-stats-wid">
-                                            <div class="card-body">
-                                                <div class="d-flex">
-                                                    <div class="flex-grow-1">
-                                                        <p class="text-muted fw-medium">In-Progress</p>
-                                                        <h4 class="mb-0">$16.2</h4>
-                                                    </div>
-
-                                                    <div class="flex-shrink-0 align-self-center">
-                                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                            <span class="avatar-title rounded-circle bg-primary">
-                                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-lg-6">
-                                        <div class="card mini-stats-wid">
-                                            <div class="card-body">
-                                                <div class="d-flex">
-                                                    <div class="flex-grow-1">
-                                                        <p class="text-muted fw-medium">Rechecking</p>
-                                                        <h4 class="mb-0">$16.2</h4>
-                                                    </div>
-
-                                                    <div class="flex-shrink-0 align-self-center">
-                                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                            <span class="avatar-title rounded-circle bg-primary">
-                                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div> */}
                                 <BugCounts projectId={projectId} token={token} ></BugCounts>
                             </div>
                         </div>
@@ -255,7 +184,7 @@ export function SingleProject() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {bugs.map((bug, index) => {
+                                    {currentItems.map((bug, index) => {
                                         return (
                                             <tr>
                                                 <td>
@@ -281,17 +210,17 @@ export function SingleProject() {
                                                 <td>{toISTLocaleString(bug.raised_on)}</td>
                                                 <td>{bug.updated_by != null ? <>
                                                     <div class="d-flex align-items-center">
-                                                                    <div class="avatar-sm bg-light rounded p-2">
-                                                                        <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
-                                                                    </div>
-                                                                    <div class="ps-3">
-                                                                        <h5 class="text-truncate font-size-12 m-0">
-                                                                            <a href="javascript: v  oid(0);" class="text-dark">{bug.updatedByName + " " + bug.updatedByLastName}</a>
-                                                                        </h5>
-                                                                        <p class="text-muted mb-0">{Status(bug.current_status)}</p>
-                                                                        <small class="text-muted mb-0">{toISTLocaleString(bug.latest_update)}</small>
-                                                                    </div>
-                                                                </div>
+                                                        <div class="avatar-sm bg-light rounded p-2">
+                                                            <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                        </div>
+                                                        <div class="ps-3">
+                                                            <h5 class="text-truncate font-size-12 m-0">
+                                                                <a href="javascript: v  oid(0);" class="text-dark">{bug.updatedByName + " " + bug.updatedByLastName}</a>
+                                                            </h5>
+                                                            <p class="text-muted mb-0">{Status(bug.current_status)}</p>
+                                                            <small class="text-muted mb-0">{toISTLocaleString(bug.latest_update)}</small>
+                                                        </div>
+                                                    </div>
                                                 </> : "N/A"}</td>
                                                 <td>{Status(bug.current_status)}</td>
                                                 <td>{Priority(bug.priority)}</td>
@@ -317,6 +246,14 @@ export function SingleProject() {
                                     })}
                                 </tbody>
                             </table>
+                            <div>
+                                <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
+                                    Previous
+                                </button>
+                                <button onClick={() => paginate(currentPage + 1)} disabled={indexOfLastItem >= bugs.length}>
+                                    Next
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
