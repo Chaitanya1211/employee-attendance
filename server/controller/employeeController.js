@@ -1,10 +1,10 @@
 const mongoose = require("mongoose")
 // face model
 const faceapi = require("face-api.js");
-const {Canvas, Image} = require('canvas');
+const { Canvas, Image } = require('canvas');
 const canvas = require("canvas")
 const fileUpload = require("express-fileupload");
-faceapi.env.monkeyPatch({Canvas, Image});
+faceapi.env.monkeyPatch({ Canvas, Image });
 const Employee = require("../models/employeeModel");
 const Attendance = require("../models/attendanceModel");
 const Face = require("../models/faceModel");
@@ -24,12 +24,11 @@ const dir = "E:/attendance/server";
 // load model function
 async function LoadModels() {
     // Load the models
-    // __dirname gives the root directory of the server
+    console.log("loading model");
     await faceapi.nets.faceRecognitionNet.loadFromDisk(dir + "/faceApiModel");
     await faceapi.nets.faceLandmark68Net.loadFromDisk(dir + "/faceApiModel");
     await faceapi.nets.ssdMobilenetv1.loadFromDisk(dir + "/faceApiModel");
-  }
-// LoadModels();
+}
 async function register(req, res) {
     try {
         const { email, password, inputImages } = req.body;
@@ -38,42 +37,20 @@ async function register(req, res) {
             res.status(409).json({ message: 'Employee already Exists' });
         } else {
             const password_hash = await bcrypt.hash(password, 10);
-            const addFace = await registerFace(email,inputImages);
-            if(addFace){
+            const addFace = await registerFace(email, inputImages);
+            if (addFace) {
                 console.log("Face added");
                 const createdEmployee = await Employee.create({ ...req.body, password_hash: password_hash });
-                if(createdEmployee){
+                if (createdEmployee) {
                     res.status(201).json({ message: 'Employee created successfully', employee: createdEmployee });
-                }else{
+                } else {
                     console.log("Employee data not saved");
                     res.status(500).json({ error: 'Internal server error' });
                 }
-            }else{
+            } else {
                 console.log("Face not added");
                 res.status(204).json({ error: 'Face data not saved' });
             }
-            // try {
-            //     const createdEmployee = await Employee.create({ ...req.body, password_hash: password_hash });
-            //     if(createdEmployee){
-            //         console.log("Employee data saved");
-            //         const addFace = await registerFace(email,inputImages);
-            //         if(addFace){
-            //             console.log("Face added")
-            //             res.status(201).json({ message: 'Employee created successfully', employee: createdEmployee });
-            //         }else{
-            //             console.log("Face not added");
-            //             res.status(500).json({ error: 'Internal server error' });
-            //         }
-            //     }else{
-            //         console.log("Employee details save failed");
-            //         console.error('Error creating employee:', error);
-            //         res.status(500).json({ error: 'Internal server error' });
-            //     }
-                
-            // } catch (error) {
-            //     console.error('Error creating employee:', error);
-            //     res.status(500).json({ error: 'Internal server error' });
-            // }
         }
     } catch (error) {
         console.error('Error creating employee:', error);
@@ -169,27 +146,35 @@ async function updateProfile(req, res) {
 
 async function markLogin(req, res) {
     const email = req.user.email;
+    const { image } = req.body;
     const currentDate = getCurrentDate();
     const currentDateTime = getCurrentDateTime();
     const updateFields = {
         login: currentDateTime,
         isLoggedIn: true
     };
-
     try {
-        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
-        if (result) {
-            // attendance marked
-            let attendance = await getAllAttendance(email);
-            if (attendance.length != 0) {
-                res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: attendance })
+        const  status = await matchFace(email, image);
+        if (status) {
+            console.log("Face matched");
+            const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
+            if (result) {
+                // attendance marked
+                let attendance = await getAllAttendance(email);
+                if (attendance.length != 0) {
+                    res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: attendance })
+                } else {
+                    res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: [] })
+                }
             } else {
-                res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: [] })
+                // attendance not marked
+                res.status(500).json({ message: "Attendance not marked. Internal server error" })
             }
         } else {
-            // attendance not marked
-            res.status(500).json({ message: "Attendance not marked. Internal server error" })
+            // reason no match and response
+            console.log("Not matched");
         }
+
     } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -363,7 +348,7 @@ async function bugDetails(req, res) {
     const bugId = new mongoose.Types.ObjectId(req.params.bugId);
     // mark as viewed
     const isViewed = await markAsViewed(bugId);
-    if(isViewed){
+    if (isViewed) {
         try {
             const bug = await Bug.aggregate([{
                 $match: {
@@ -379,34 +364,34 @@ async function bugDetails(req, res) {
                 }
             },
             {
-                $unwind : "$raising_employee"
+                $unwind: "$raising_employee"
             },
             {
-                $lookup:{
+                $lookup: {
                     from: "employees",
                     localField: "assignedTo",
                     foreignField: "email",
                     as: 'assigned_employee'
                 }
-            },{
-                $unwind : "$assigned_employee"
-            },{
+            }, {
+                $unwind: "$assigned_employee"
+            }, {
                 $lookup: {
                     from: "employees",
                     localField: "updated_by",
                     foreignField: "email",
                     as: 'updated_employee'
                 }
-            },{
-                $unwind : {
-                    path : "$updated_employee",
+            }, {
+                $unwind: {
+                    path: "$updated_employee",
                     preserveNullAndEmptyArrays: true
                 }
-            },{
-                $project:{
+            }, {
+                $project: {
                     "title": 1,
                     "description": 1,
-                    "images":1,
+                    "images": 1,
                     "raisedByName": "$raising_employee.firstName",
                     "raisedBylastName": "$raising_employee.lastName",
                     "raisedByProfile": "$raising_employee.profileImg",
@@ -416,208 +401,246 @@ async function bugDetails(req, res) {
                     "raised_on": 1,
                     "priority": 1,
                     "current_status": 1,
-                    "qa_status":1,
-                    "dev_status":1,
-                    "updated_by" : 1,
-                    "updatedByName" : "$updated_employee.firstName",
-                    "updatedByLastName" : "$updated_employee.lastName",
-                    "updatedByProfile" : "$updated_employee.profileImg",
-                    "updatedAt":1,
-                    "latest_update":1
+                    "qa_status": 1,
+                    "dev_status": 1,
+                    "updated_by": 1,
+                    "updatedByName": "$updated_employee.firstName",
+                    "updatedByLastName": "$updated_employee.lastName",
+                    "updatedByProfile": "$updated_employee.profileImg",
+                    "updatedAt": 1,
+                    "latest_update": 1
                 }
             }
             ]);
             if (bug.length != 0) {
                 const comments = await bugComments(tempBugId);
-                res.status(200).json({ message: "Bug found", bug: bug, comments : comments, role:role })
+                res.status(200).json({ message: "Bug found", bug: bug, comments: comments, role: role })
             } else {
-                res.status(404).json({ message: "Bug not found", role:role });
+                res.status(404).json({ message: "Bug not found", role: role });
             }
         } catch (error) {
             console.error('Internal server error', error);
             res.status(500).json({ error: 'Internal server error' });
         }
-    }else{
+    } else {
         console.log("unable to mark viewed");
         res.status(500).json({ error: 'Internal server error' });
     }
-    
+
 }
 
-async function addComment(req,res){
-    const {bugId} = req.body;
+async function addComment(req, res) {
+    const { bugId } = req.body;
     const email = req.user.email;
-    try{
-        const newComment = await Comment.create({...req.body,by:email})
+    try {
+        const newComment = await Comment.create({ ...req.body, by: email })
         const comments = await bugComments(bugId);
-        if(newComment){
-            res.status(201).json({message : "Comment addded successfully", comments:comments})
-        }else{
-            res.status(500).json({ message:"Comment addition unsuccessfull", error: 'Internal server error', comments:comments });
+        if (newComment) {
+            res.status(201).json({ message: "Comment addded successfully", comments: comments })
+        } else {
+            res.status(500).json({ message: "Comment addition unsuccessfull", error: 'Internal server error', comments: comments });
         }
-    }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 }
 
-async function getAllComments(req,res){
+async function getAllComments(req, res) {
     const bugId = req.params.bugId;
-    try{
+    try {
         const comments = await bugComments(bugId);
-        if(comments.length !=0){
+        if (comments.length != 0) {
             // comments present
-            res.status(200).json({message:"Comments present", comments:comments});
-        }else{
+            res.status(200).json({ message: "Comments present", comments: comments });
+        } else {
             // no comments avaiblable
-            res.status(404).json({message:"Comments not present", comments:comments})
+            res.status(404).json({ message: "Comments not present", comments: comments })
         }
 
-    }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' }); 
+        res.status(500).json({ error: 'Internal server error' });
     }
 }
 
-async function updateBugStatus(req,res){
-    const role=req.user.role;
+async function updateBugStatus(req, res) {
+    const role = req.user.role;
     const email = req.user.email;
-    const {bugId} = req.body;
-    const currentDateTime=getISTDate();
-    const updatedData={
-        updated_by : email,
-        latest_update : currentDateTime
+    const { bugId } = req.body;
+    const currentDateTime = getISTDate();
+    const updatedData = {
+        updated_by: email,
+        latest_update: currentDateTime
     };
     const castedId = new mongoose.Types.ObjectId(bugId);
-    try{
-        if(role=="Developer"){
+    try {
+        if (role == "Developer") {
             // developer
-            const {dev_status} = req.body;
-            
-            const bugUpdate = await Bug.updateOne({_id:castedId},{$set : {...updatedData, dev_status:dev_status,current_status:dev_status}});
-            if(bugUpdate){
-                res.status(200).json({message: "Status updated successfully", updated:bugUpdate});
-            }else{
-                res.status(500).json({message : "Not updated"})
+            const { dev_status } = req.body;
+
+            const bugUpdate = await Bug.updateOne({ _id: castedId }, { $set: { ...updatedData, dev_status: dev_status, current_status: dev_status } });
+            if (bugUpdate) {
+                res.status(200).json({ message: "Status updated successfully", updated: bugUpdate });
+            } else {
+                res.status(500).json({ message: "Not updated" })
             }
-        }else{
+        } else {
             // tester
-            const {qa_status} = req.body;
-            const bugUpdate = await Bug.updateOne({_id:castedId},{$set : {...updatedData, qa_status:qa_status, current_status:qa_status}});
-            if(bugUpdate){
-                res.status(200).json({message: "Status updated successfully", updated:bugUpdate});
-            }else{
-                res.status(500).json({message : "Not updated"})
+            const { qa_status } = req.body;
+            const bugUpdate = await Bug.updateOne({ _id: castedId }, { $set: { ...updatedData, qa_status: qa_status, current_status: qa_status } });
+            if (bugUpdate) {
+                res.status(200).json({ message: "Status updated successfully", updated: bugUpdate });
+            } else {
+                res.status(500).json({ message: "Not updated" })
             }
         }
-    }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' }); 
+        res.status(500).json({ error: 'Internal server error' });
     }
-    
+
 }
 
-async function getStatusCount(req,res){
+async function getStatusCount(req, res) {
     const projectId = req.params.projectId;
     const castedId = new mongoose.Types.ObjectId(projectId);
-    var counts={};
-    try{
-        const total = await Bug.countDocuments({projectId:castedId});
+    var counts = {};
+    try {
+        const total = await Bug.countDocuments({ projectId: castedId });
         counts["total"] = total;
-        const closed = await Bug.countDocuments({ $and :[{current_status : "CLOSED"}, {projectId:castedId}]});
+        const closed = await Bug.countDocuments({ $and: [{ current_status: "CLOSED" }, { projectId: castedId }] });
         counts["closed"] = closed;
-        const open = await Bug.countDocuments({ $and :[{current_status : "OPEN"}, {projectId:castedId}]});
+        const open = await Bug.countDocuments({ $and: [{ current_status: "OPEN" }, { projectId: castedId }] });
         counts["open"] = open;
-        const done = await Bug.countDocuments({ $and :[{current_status : "DONE"}, {projectId:castedId}]});
+        const done = await Bug.countDocuments({ $and: [{ current_status: "DONE" }, { projectId: castedId }] });
         counts["done"] = done;
-        const inprogress = await Bug.countDocuments({ $and :[{current_status : "INPROGRESS"}, {projectId:castedId}]});
+        const inprogress = await Bug.countDocuments({ $and: [{ current_status: "INPROGRESS" }, { projectId: castedId }] });
         counts["inprogress"] = inprogress;
-        const recheck = await Bug.countDocuments({ $and :[{current_status : "RECHECKING"}, {projectId:castedId}]});
+        const recheck = await Bug.countDocuments({ $and: [{ current_status: "RECHECKING" }, { projectId: castedId }] });
         counts["rechecking"] = recheck;
         console.log(counts);
-        res.status(200).json({message:"Details found", count:counts})
-    }catch(error){
+        res.status(200).json({ message: "Details found", count: counts })
+    } catch (error) {
         console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' }); 
+        res.status(500).json({ error: 'Internal server error' });
     }
 }
 
 // No route functions
 
-async function registerFace(userId, faceImageArray){
+async function registerFace(userId, faceImageArray) {
     await LoadModels();
-    console.log("Load models called");
     try {
-    
         if (!faceImageArray || faceImageArray.length !== 5) {
             return false;
         }
-    
         const labeledFaceDescriptors = [];
-    
+
         for (let image of faceImageArray) {
-          const img = await canvas.loadImage(image);
-          const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
-    
-          if (!detections) {
-            console.log("Face not recognised");
-            return false;
-          }
-          const faceDescriptor = detections.descriptor;
-          labeledFaceDescriptors.push(faceDescriptor);
-          console.log("Image saved");
+            const img = await canvas.loadImage(image);
+            const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+
+            if (!detections) {
+                console.log("Face not recognised");
+                return false;
+            }
+            const faceDescriptor = detections.descriptor;
+            labeledFaceDescriptors.push(Array.from(faceDescriptor));
+            console.log("Image saved");
         }
-    
+
         // Save the labeled face descriptors to MongoDB
         console.log("Face descriptors :", labeledFaceDescriptors);
         const faceData = new Face({
-          user: userId,
-          descriptions: labeledFaceDescriptors,
+            user: userId,
+            descriptions: labeledFaceDescriptors,
         });
-    
-        const result =  await faceData.save();
-        if(result){
+
+        const result = await faceData.save();
+        if (result) {
             console.log("Face saved");
             return true;
-        }else{
+        } else {
             return false;
         }
-    
-      } catch (error) {
+
+    } catch (error) {
         console.error(error);
         return false;
-      }
+    }
 }
 
-async function bugComments(bugId){
-    // const bugId = req.params.bugId;
-        const allComments = await Comment.aggregate([
-            {
-                $match:{
-                    bugId : bugId
-                }
-            },
-            {
-                $lookup:{
-                    from:"employees",
-                    localField : "by",
-                    foreignField : "email",
-                    as:"employee"
-                }
-            },{
-                $unwind:"$employee"
-            },{
-                $project:{
-                    "bugId" : 1,
-                    "comment" : 1,
-                    "employee.firstName" : 1,
-                    "employee.lastName" : 1,
-                    "employee.profileImg":1,
-                    "at" : 1
-                }
+async function matchFace(email, image) {
+    await LoadModels();
+    try {
+        const img = await canvas.loadImage(image);
+        const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+
+        if (!detections) {
+            // Face not detected
+            console.log("Face not found");
+            return false
+        }
+
+        const queryDescriptor = detections.descriptor;
+        console.log("queryDescriptor length :" , queryDescriptor.length);
+        // Load the specific user's face data from the database
+        const userFaceData = await Face.findOne({ user: email });
+        let bestMatch = null;
+        let bestDistance = Infinity;
+
+        // Compare query descriptor with stored descriptors of the specific user
+        for (const descriptor of userFaceData.descriptions) {
+            const distance = faceapi.euclideanDistance(queryDescriptor, descriptor);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestMatch = userFaceData;
             }
-        ]);
-        return allComments;
+        }
+
+        if (bestMatch) {
+            return true;
+            // res.send({ message: 'Face matched', label: bestMatch.label, distance: bestDistance });
+        } else {
+            return false;
+            // res.send({ message: 'No match found' });
+        }
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
+async function bugComments(bugId) {
+    // const bugId = req.params.bugId;
+    const allComments = await Comment.aggregate([
+        {
+            $match: {
+                bugId: bugId
+            }
+        },
+        {
+            $lookup: {
+                from: "employees",
+                localField: "by",
+                foreignField: "email",
+                as: "employee"
+            }
+        }, {
+            $unwind: "$employee"
+        }, {
+            $project: {
+                "bugId": 1,
+                "comment": 1,
+                "employee.firstName": 1,
+                "employee.lastName": 1,
+                "employee.profileImg": 1,
+                "at": 1
+            }
+        }
+    ]);
+    return allComments;
 }
 
 function getCurrentDate() {
@@ -687,16 +710,16 @@ async function getProjectBugs(projectId) {
                 }
             }, {
                 $unwind: "$assigned_employee"
-            },{
+            }, {
                 $lookup: {
                     from: "employees",
                     localField: "updated_by",
                     foreignField: "email",
                     as: 'updated_employee'
                 }
-            },{
-                $unwind : {
-                    path : "$updated_employee",
+            }, {
+                $unwind: {
+                    path: "$updated_employee",
                     preserveNullAndEmptyArrays: true
                 }
             }, {
@@ -710,13 +733,13 @@ async function getProjectBugs(projectId) {
                     "raised_on": 1,
                     "priority": 1,
                     "current_status": 1,
-                    "isViewed" :1,
-                    "updated_by" : 1,
-                    "updatedByName" : "$updated_employee.firstName",
-                    "updatedByLastName" : "$updated_employee.lastName",
-                    "updatedByProfile" : "$updated_employee.profileImg",
-                    "updatedAt":1,
-                    "latest_update":1
+                    "isViewed": 1,
+                    "updated_by": 1,
+                    "updatedByName": "$updated_employee.firstName",
+                    "updatedByLastName": "$updated_employee.lastName",
+                    "updatedByProfile": "$updated_employee.profileImg",
+                    "updatedAt": 1,
+                    "latest_update": 1
                 }
             }
         ]).sort({ latest_update: -1 });
@@ -731,14 +754,14 @@ async function getProjectBugs(projectId) {
     }
 }
 
-async function markAsViewed(bugId){
+async function markAsViewed(bugId) {
     const data = {
-        isViewed:true
+        isViewed: true
     }
-    const result = await Bug.updateOne({_id : bugId}, {$set:data});
-    if(result){
+    const result = await Bug.updateOne({ _id: bugId }, { $set: data });
+    if (result) {
         return true;
-    }else{
+    } else {
         return false;
     }
 }
