@@ -1,6 +1,13 @@
 const mongoose = require("mongoose")
+// face model
+const faceapi = require("face-api.js");
+const {Canvas, Image} = require('canvas');
+const canvas = require("canvas")
+const fileUpload = require("express-fileupload");
+faceapi.env.monkeyPatch({Canvas, Image});
 const Employee = require("../models/employeeModel");
 const Attendance = require("../models/attendanceModel");
+const Face = require("../models/faceModel");
 const Project = require("../models/projectModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -13,23 +20,60 @@ cloudinary.config({
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET
 });
-
+const dir = "E:/attendance/server";
+// load model function
+async function LoadModels() {
+    // Load the models
+    // __dirname gives the root directory of the server
+    await faceapi.nets.faceRecognitionNet.loadFromDisk(dir + "/faceApiModel");
+    await faceapi.nets.faceLandmark68Net.loadFromDisk(dir + "/faceApiModel");
+    await faceapi.nets.ssdMobilenetv1.loadFromDisk(dir + "/faceApiModel");
+  }
+// LoadModels();
 async function register(req, res) {
     try {
-        const { email, password } = req.body;
+        const { email, password, inputImages } = req.body;
         const response = await Employee.findOne({ email: email });
         if (response) {
             res.status(409).json({ message: 'Employee already Exists' });
         } else {
             const password_hash = await bcrypt.hash(password, 10);
-            try {
+            const addFace = await registerFace(email,inputImages);
+            if(addFace){
+                console.log("Face added");
                 const createdEmployee = await Employee.create({ ...req.body, password_hash: password_hash });
-                console.log("Employee created")
-                res.status(201).json({ message: 'Employee created successfully', employee: createdEmployee });
-            } catch (error) {
-                console.error('Error creating employee:', error);
-                res.status(500).json({ error: 'Internal server error' });
+                if(createdEmployee){
+                    res.status(201).json({ message: 'Employee created successfully', employee: createdEmployee });
+                }else{
+                    console.log("Employee data not saved");
+                    res.status(500).json({ error: 'Internal server error' });
+                }
+            }else{
+                console.log("Face not added");
+                res.status(204).json({ error: 'Face data not saved' });
             }
+            // try {
+            //     const createdEmployee = await Employee.create({ ...req.body, password_hash: password_hash });
+            //     if(createdEmployee){
+            //         console.log("Employee data saved");
+            //         const addFace = await registerFace(email,inputImages);
+            //         if(addFace){
+            //             console.log("Face added")
+            //             res.status(201).json({ message: 'Employee created successfully', employee: createdEmployee });
+            //         }else{
+            //             console.log("Face not added");
+            //             res.status(500).json({ error: 'Internal server error' });
+            //         }
+            //     }else{
+            //         console.log("Employee details save failed");
+            //         console.error('Error creating employee:', error);
+            //         res.status(500).json({ error: 'Internal server error' });
+            //     }
+                
+            // } catch (error) {
+            //     console.error('Error creating employee:', error);
+            //     res.status(500).json({ error: 'Internal server error' });
+            // }
         }
     } catch (error) {
         console.error('Error creating employee:', error);
@@ -499,6 +543,52 @@ async function getStatusCount(req,res){
 }
 
 // No route functions
+
+async function registerFace(userId, faceImageArray){
+    await LoadModels();
+    console.log("Load models called");
+    try {
+    
+        if (!faceImageArray || faceImageArray.length !== 5) {
+            return false;
+        }
+    
+        const labeledFaceDescriptors = [];
+    
+        for (let image of faceImageArray) {
+          const img = await canvas.loadImage(image);
+          const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+    
+          if (!detections) {
+            console.log("Face not recognised");
+            return false;
+          }
+          const faceDescriptor = detections.descriptor;
+          labeledFaceDescriptors.push(faceDescriptor);
+          console.log("Image saved");
+        }
+    
+        // Save the labeled face descriptors to MongoDB
+        console.log("Face descriptors :", labeledFaceDescriptors);
+        const faceData = new Face({
+          user: userId,
+          descriptions: labeledFaceDescriptors,
+        });
+    
+        const result =  await faceData.save();
+        if(result){
+            console.log("Face saved");
+            return true;
+        }else{
+            return false;
+        }
+    
+      } catch (error) {
+        console.error(error);
+        return false;
+      }
+}
+
 async function bugComments(bugId){
     // const bugId = req.params.bugId;
         const allComments = await Comment.aggregate([
