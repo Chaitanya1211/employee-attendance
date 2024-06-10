@@ -13,6 +13,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Bug = require("../models/bugModel");
 const Comment = require("../models/commentModel");
+const BugHistory = require("../models/bugHistoryModel");
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 cloudinary.config({
@@ -155,6 +156,7 @@ async function markLogin(req, res) {
     };
     try {
         const  status = await matchFace(email, image);
+        console.log(status);
         if (status) {
             console.log("Face matched");
             const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
@@ -172,6 +174,7 @@ async function markLogin(req, res) {
             }
         } else {
             // reason no match and response
+            res.status(500).json({ message: "Attendance not marked. Internal server error" })
             console.log("Not matched");
         }
 
@@ -243,19 +246,6 @@ async function home(req, res) {
     } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error', role: role });
-    }
-}
-
-async function getAllAttendance(email) {
-    try {
-        const result = await Attendance.find({ employeeEmail: email }).sort({ today: -1 });
-        if (result) {
-            return result;
-        } else {
-            return null;
-        }
-    } catch (error) {
-        return null;
     }
 }
 
@@ -436,6 +426,7 @@ async function addComment(req, res) {
         const newComment = await Comment.create({ ...req.body, by: email })
         const comments = await bugComments(bugId);
         if (newComment) {
+            // store history
             res.status(201).json({ message: "Comment addded successfully", comments: comments })
         } else {
             res.status(500).json({ message: "Comment addition unsuccessfull", error: 'Internal server error', comments: comments });
@@ -529,6 +520,19 @@ async function getStatusCount(req, res) {
 
 // No route functions
 
+async function getAllAttendance(email) {
+    try {
+        const result = await Attendance.find({ employeeEmail: email }).sort({ today: -1 });
+        if (result) {
+            return result;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        return null;
+    }
+}
+
 async function registerFace(userId, faceImageArray) {
     await LoadModels();
     try {
@@ -584,22 +588,22 @@ async function matchFace(email, image) {
         }
 
         const queryDescriptor = detections.descriptor;
-        console.log("queryDescriptor length :" , queryDescriptor.length);
         // Load the specific user's face data from the database
         const userFaceData = await Face.findOne({ user: email });
         let bestMatch = null;
-        let bestDistance = Infinity;
-
+        let bestDistance = 0;
+        let matchDistance = 0.4;
         // Compare query descriptor with stored descriptors of the specific user
         for (const descriptor of userFaceData.descriptions) {
             const distance = faceapi.euclideanDistance(queryDescriptor, descriptor);
-            if (distance < bestDistance) {
+            if (distance > bestDistance) {
                 bestDistance = distance;
                 bestMatch = userFaceData;
+                }
             }
-        }
+            console.log("Best distance :" , bestDistance);
 
-        if (bestMatch) {
+        if (bestDistance < matchDistance) {
             return true;
             // res.send({ message: 'Face matched', label: bestMatch.label, distance: bestDistance });
         } else {

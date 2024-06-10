@@ -6,6 +6,7 @@ import { Priority, Status } from "../../helper/priority";
 import { toISTLocaleString } from "../../helper/dates";
 import defaultImage from "../../assets/defaultImage.jpg";
 import { BugCounts } from "./employeeComponents/bugCount";
+import { BackBtn } from "../../helper/backButton";
 export function SingleProject() {
     const { projectId } = useParams();
     const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -18,8 +19,8 @@ export function SingleProject() {
     const [itemsPerPage, setItemsPerPage] = useState(5);
 
     const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = bugs.slice(indexOfFirstItem, indexOfLastItem);
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = bugs.slice(indexOfFirstItem, indexOfLastItem);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     useEffect(() => {
@@ -69,8 +70,10 @@ export function SingleProject() {
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-flex align-items-center justify-content-between">
-                                <i class="ri-arrow-left-s-line"></i>
-                                    <h4 class="mb-0 font-size-18">Project overview</h4>
+                                    <div className="d-flex align-items-center">
+                                        <BackBtn />
+                                        <h4 class="mb-0 font-size-18">Project overview</h4>
+                                    </div>
 
                                     <div class="page-title-right">
                                         <ol class="breadcrumb m-0">
@@ -246,11 +249,11 @@ export function SingleProject() {
                                     })}
                                 </tbody>
                             </table>
-                            <div>
-                                <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
+                            <div className="d-flex justify-content-end">
+                                <button className="btn btn-primary mx-2" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
                                     Previous
                                 </button>
-                                <button onClick={() => paginate(currentPage + 1)} disabled={indexOfLastItem >= bugs.length}>
+                                <button className="btn btn-primary mx-2" onClick={() => paginate(currentPage + 1)} disabled={indexOfLastItem >= bugs.length}>
                                     Next
                                 </button>
                             </div>

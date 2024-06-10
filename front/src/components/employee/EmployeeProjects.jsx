@@ -8,6 +8,7 @@ export function EmployeeProjects() {
     const [token, getToken] = useState(localStorage.getItem('token') || '');
     const [projects, setProjects] = useState([]);
     const [role, setRole] = useState();
+    const [countData, setCountData] = useState([]);
     useEffect(() => {
         axios({
             url: "http://localhost:8080/employee/projects",
@@ -25,6 +26,21 @@ export function EmployeeProjects() {
         })
     }, [])
 
+    // useEffect(() => {
+    //     axios({
+    //         url: `http://localhost:8080/employee/project/getBugCount/${projectId}`,
+    //         method: "GET",
+    //         headers: {
+    //             "token": token
+    //         }
+    //     }).then((response) => {
+    //         if (response.status === 200) {
+    //             setCountData(response.data.count)
+    //         }
+    //     }).catch((error) => {
+    //         console.log("Error :", error)
+    //     })
+    // }, [])
     return (
         <>
             <div className="d-flex">
