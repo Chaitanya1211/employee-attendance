@@ -611,7 +611,7 @@ async function matchFace(email, image) {
         const userFaceData = await Face.findOne({ user: email });
         let bestMatch = null;
         let bestDistance = 0;
-        let matchDistance = 0.4;
+        let matchDistance = 0.5;
         // Compare query descriptor with stored descriptors of the specific user
         for (const descriptor of userFaceData.descriptions) {
             const distance = faceapi.euclideanDistance(queryDescriptor, descriptor);
