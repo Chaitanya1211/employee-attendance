@@ -6,6 +6,7 @@ import { Priority, Status } from "../../helper/priority";
 import { toISTLocaleString } from "../../helper/dates";
 import { useForm } from "react-hook-form";
 import defaultImage from "../../assets/defaultImage.jpg";
+import { BackBtn } from "../../helper/backButton";
 export function BugAction() {
     const { bugId } = useParams();
     const [bug, setBug] = useState([]);
@@ -123,6 +124,22 @@ export function BugAction() {
                     <div className="col-lg-12 p-5">
                         <div class="row">
                             <div class="col-lg-12">
+                            <div class="col-12">
+                                <div class="page-title-box d-flex align-items-center justify-content-between">
+                                    <div className="d-flex align-items-center">
+                                        <BackBtn />
+                                        <h4 class="mb-0 font-size-18">Bug overview</h4>
+                                    </div>
+
+                                    <div class="page-title-right">
+                                        <ol class="breadcrumb m-0">
+                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Bug</a></li>
+                                            <li class="breadcrumb-item active">Project</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+
                                 <div class="card">
                                     <div class="card-body p-4">
                                         <div class="row">
@@ -194,7 +211,7 @@ export function BugAction() {
                                                                 <h6 className="mb-2">Raised By</h6>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm rounded p-1">
-                                                                        <img src={bug.raisedByProfile ?? defaultImage} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                        <img src={bug.raisedByProfile ?? defaultImage} alt="Profile" class="img-fluid rounded-circle" />
                                                                     </div>
                                                                     <div class="ps-3">
                                                                         <h5 class="text-truncate font-size-14 m-0">
@@ -234,7 +251,7 @@ export function BugAction() {
                                                             {bug.updated_by != null ? <>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm bg-light rounded p-2">
-                                                                        <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                                        <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Profile" class="img-fluid rounded-circle" />
                                                                     </div>
                                                                     <div class="ps-3">
                                                                         <h5 class="text-truncate font-size-14 m-0">
@@ -295,9 +312,10 @@ export function BugAction() {
                                                         })}
 
                                                     </> : <h4> No comments yet </h4>}
+                                                    
                                                     <ul class="list-inline float-sm-end mb-sm-0 my-2">
                                                         <li class="list-inline-item">
-                                                            <a href="javascript: void(0);" onClick={addInput}><i class="far fa-comment-dots me-1"></i> Comment</a>
+                                                            <a href="javascript: void(0);" onClick={addInput}><i class="far fa-comment-dots me-1" ></i> Comment</a>
                                                         </li>
                                                     </ul>
                                                 </div>

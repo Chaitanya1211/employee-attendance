@@ -13,6 +13,10 @@ const bugHistory = mongoose.Schema({
         required : true,
         ref:'Bug'
     },
+    by:{
+        type:String,
+        required : true
+    },
     type:{
         type:String,
         enum :['COMMENT','STATUS'],

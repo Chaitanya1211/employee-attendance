@@ -420,14 +420,19 @@ async function bugDetails(req, res) {
 }
 
 async function addComment(req, res) {
-    const { bugId } = req.body;
+    const { bugId , comment} = req.body;
     const email = req.user.email;
     try {
         const newComment = await Comment.create({ ...req.body, by: email })
         const comments = await bugComments(bugId);
         if (newComment) {
             // store history
-            res.status(201).json({ message: "Comment addded successfully", comments: comments })
+            const history = await BugHistory.create({bugId : bugId, by:email, type:"COMMENT", data : comment });
+            if(history){
+                res.status(201).json({ message: "Comment addded successfully", comments: comments })
+            }else{
+                res.status(500).json({ message: "Comment addition unsuccessfull", error: 'Internal server error', comments: comments });
+            }
         } else {
             res.status(500).json({ message: "Comment addition unsuccessfull", error: 'Internal server error', comments: comments });
         }
@@ -472,6 +477,8 @@ async function updateBugStatus(req, res) {
 
             const bugUpdate = await Bug.updateOne({ _id: castedId }, { $set: { ...updatedData, dev_status: dev_status, current_status: dev_status } });
             if (bugUpdate) {
+                // add history
+                const history  = BugHistory.create({bugId:bugId, by:email, type:"STATUS", data:dev_status})
                 res.status(200).json({ message: "Status updated successfully", updated: bugUpdate });
             } else {
                 res.status(500).json({ message: "Not updated" })
@@ -481,6 +488,8 @@ async function updateBugStatus(req, res) {
             const { qa_status } = req.body;
             const bugUpdate = await Bug.updateOne({ _id: castedId }, { $set: { ...updatedData, qa_status: qa_status, current_status: qa_status } });
             if (bugUpdate) {
+                 // add history
+                 const history  = BugHistory.create({bugId:bugId, by:email, type:"STATUS", data:qa_status})
                 res.status(200).json({ message: "Status updated successfully", updated: bugUpdate });
             } else {
                 res.status(500).json({ message: "Not updated" })
@@ -515,6 +524,16 @@ async function getStatusCount(req, res) {
     } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function getHistory(req,res){
+    const id= req.params.bugId;
+    const history = await getBugHistory(id);
+    if(history){
+        res.status(200).json({message : "History found", history:history})
+    }else{
+        res.status(404).json({message : "History not found", history:history});
     }
 }
 
@@ -770,6 +789,49 @@ async function markAsViewed(bugId) {
     }
 }
 
+async function getBugHistory(bugId){
+    try{
+        const history = await BugHistory.aggregate([
+            {
+                $match: {
+                    bugId: bugId
+                }
+            },{
+                $lookup:{
+                    from: "employees",
+                    localField: "by",
+                    foreignField: "email",
+                    as: "employee"
+                }
+            },
+            {
+                $unwind:"$employee"
+            },
+            {
+                $project:{
+                    "bugId" : 1,
+                    "by":1,
+                    "type":1,
+                    "data":1,
+                    "emp_f_name" : "$employee.firstName",
+                    "emp_l_name" : "$employee.lastName",
+                    "emp_profile" : "$employee.profileImg",
+                    "time" :1
+                }
+            }
+        ])
+
+        if (history) {
+            return history;
+        } else {
+            return null;
+        }
+    }catch(e){
+        console.log("error :", e);
+        return null;
+    }
+}
+
 function getISTDate() {
     const now = new Date();
     const utcDate = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
@@ -795,3 +857,4 @@ exports.addComment = addComment;
 exports.getAllComments = getAllComments;
 exports.updateBugStatus = updateBugStatus;
 exports.getStatusCount = getStatusCount;
+exports.getHistory = getHistory;
