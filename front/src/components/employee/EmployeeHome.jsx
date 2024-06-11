@@ -18,6 +18,7 @@ export function EmployeeHome() {
     const [attendance, setAttendance] = useState([]);
     const [image, setImage] = useState();
     const [loader, setLoader] = useState(false);
+
     useEffect(() => {
         axios({
             url: "http://localhost:8080/employee/home",
@@ -209,7 +210,7 @@ export function EmployeeHome() {
                                 </div>
                             </div>
                         </div>
-                        <AttendanceList attendance={attendance} />
+                        <AttendanceList />
 
                     </div>
                 </div>

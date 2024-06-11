@@ -1,4 +1,15 @@
-export function AttendanceList({ attendance }) {
+import axios from "axios";
+import { useEffect, useState } from "react";
+
+export function AttendanceList() {
+    const [token, setToken] = useState(localStorage.getItem("token") || '');
+
+    // pagination
+    const [paginatedItems, setPaginatedItems] = useState([]);
+    const [pageSize, setPageSize] = useState(7);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPage, setTotalPage] = useState(0);
+    const [paginateLoader, setPaginateLoader] = useState(false)
     function calculateWorkingHours(loginTime, logoutTime) {
         const loginDateTime = new Date(`${loginTime} ${new Date().getFullYear()}`);
         if (!logoutTime) {
@@ -10,6 +21,40 @@ export function AttendanceList({ attendance }) {
         return workingHours.toFixed(2);
     }
 
+    useEffect(() => {
+        function getAttendance() {
+            console.log("pAginate loader :", paginateLoader);
+            setPaginateLoader(true);
+            axios({
+                url: `http://localhost:8080/employee/attendances?page=${currentPage}&pageSize=${pageSize}`,
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "token": token
+                }
+            }).then((response) => {
+                console.log("Attendcance data");
+                console.log(response.data);
+                if (response.status === 200) {
+                    setPaginatedItems(response.data?.attendance);
+                    setTotalPage(response.data?.totalPages)
+                }
+                setPaginateLoader(false);
+            }).catch((error) => {
+                console.log("Error :", error);
+            })
+        }
+        getAttendance();
+    }, [currentPage, pageSize]);
+
+    const nextPage = () => {
+        setCurrentPage(currentPage + 1);
+        console.log("Page incermented", currentPage);
+    }
+    const previousPage = () => {
+        setCurrentPage(currentPage - 1);
+        console.log("Page decrements", currentPage);
+    }
     return (
         <>
             <div className="row">
@@ -30,29 +75,58 @@ export function AttendanceList({ attendance }) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {attendance.map((att, index) => {
-                                                const workingHours = calculateWorkingHours(att.login, att.logout);
-                                                return (
-                                                    <tr key={index}>
-                                                        <td>{index + 1}</td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <div>
-                                                                    <h5 className="text-truncate font-size-14 mb-1">
-                                                                        <a href="javascript: void(0);" className="text-dark">{att.showDate ?? att.today}</a>
-                                                                    </h5>
-                                                                </div>
+                                            {paginateLoader ? 
+                                            <>
+                                                <tr>
+                                                    <td colspan="5">
+                                                        <div className="d-flex my-3 justify-content-center w-100">
+                                                            <div class="spinner-grow spinner-grow-sm mx-2" role="status">
+                                                                <span class="sr-only">Loading...</span>
                                                             </div>
-                                                        </td>
-                                                        <td>{att.login ?? "-"}</td>
-                                                        <td>{att.logout ?? "-"}</td>
-                                                        <td>{workingHours}</td>
-                                                    </tr>
-                                                );
-                                            })}
-
+                                                            <div class="spinner-grow spinner-grow-sm mx-2" role="status">
+                                                                <span class="sr-only">Loading...</span>
+                                                            </div>
+                                                            <div class="spinner-grow spinner-grow-sm mx-2" role="status">
+                                                                <span class="sr-only">Loading...</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </> 
+                                            : 
+                                            <>
+                                                    {paginatedItems.map((att, index) => {
+                                                        const workingHours = calculateWorkingHours(att.login, att.logout);
+                                                        return (
+                                                            <tr key={index}>
+                                                                <td>{((currentPage - 1) * pageSize) + (index + 1)}</td>
+                                                                <td>
+                                                                    <div className="d-flex align-items-center">
+                                                                        <div>
+                                                                            <h5 className="text-truncate font-size-14 mb-1">
+                                                                                <a href="javascript: void(0);" className="text-dark">{att.showDate ?? att.today}</a>
+                                                                            </h5>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>{att.login ?? "-"}</td>
+                                                                <td>{att.logout ?? "-"}</td>
+                                                                <td>{workingHours}</td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </>
+                                            }
                                         </tbody>
                                     </table>
+                                </div>
+                                <div className="d-flex justify-content-end">
+                                    <button className="btn btn-primary mx-2" onClick={previousPage} disabled={currentPage === 1}>
+                                        Previous
+                                    </button>
+                                    <button className="btn btn-primary mx-2" onClick={nextPage} disabled={currentPage === totalPage}>
+                                        Next
+                                    </button>
                                 </div>
                             </div>
                         </div>

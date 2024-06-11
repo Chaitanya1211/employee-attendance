@@ -30,6 +30,7 @@ async function LoadModels() {
     await faceapi.nets.faceLandmark68Net.loadFromDisk(dir + "/faceApiModel");
     await faceapi.nets.ssdMobilenetv1.loadFromDisk(dir + "/faceApiModel");
 }
+
 async function register(req, res) {
     try {
         const { email, password, inputImages } = req.body;
@@ -155,7 +156,7 @@ async function markLogin(req, res) {
         isLoggedIn: true
     };
     try {
-        const  status = await matchFace(email, image);
+        const status = await matchFace(email, image);
         console.log(status);
         if (status) {
             console.log("Face matched");
@@ -270,10 +271,10 @@ async function getProjectDetails(req, res) {
     const role = req.user.role;
     console.log("Role :", role)
     const projectDetails = await getProject(projectId);
-    const bugs = await getProjectBugs(projectId);
+    // const bugs = await getProjectBugs(projectId);
     if (role == "Tester") {
         if (projectDetails != null) {
-            res.status(200).json({ details: projectDetails, bugs: bugs, role: role });
+            res.status(200).json({ details: projectDetails, role: role });
         } else {
             res.status(404).json({ message: "No project found", role: role });
             // console.log("Project not found");
@@ -281,7 +282,7 @@ async function getProjectDetails(req, res) {
 
     } else {
         // for developer
-        res.status(200).json({ details: projectDetails, bugs: bugs, role: role });
+        res.status(200).json({ details: projectDetails, role: role });
         console.log("Api for developer")
     }
 }
@@ -315,6 +316,21 @@ async function raiseBug(req, res) {
     } else {
         // unauthorised access
         return res.status(401).json({ message: "Access restricted" })
+    }
+}
+
+async function getBugs(req,res){
+    const projectId = req.query.projectId;
+    const page = req.query.page;
+    const pageSize = req.query.pageSize;
+    console.log("Page :", page);
+    console.log("Page size :", pageSize);
+    const [bugs,totalItems] = await getProjectBugs(projectId, page,pageSize);
+    // console.log("Bugs :", bugs)
+    if(bugs){
+        res.status(200).json({message:"Bugs found", bugs:bugs, page:page,totalPages: Math.ceil(totalItems / pageSize)})
+    }else{
+        res.status(404).json({message:"Bugs not found"})
     }
 }
 
@@ -420,17 +436,17 @@ async function bugDetails(req, res) {
 }
 
 async function addComment(req, res) {
-    const { bugId , comment} = req.body;
+    const { bugId, comment } = req.body;
     const email = req.user.email;
     try {
         const newComment = await Comment.create({ ...req.body, by: email })
         const comments = await bugComments(bugId);
         if (newComment) {
             // store history
-            const history = await BugHistory.create({bugId : bugId, by:email, type:"COMMENT", data : comment });
-            if(history){
+            const history = await BugHistory.create({ bugId: bugId, by: email, type: "COMMENT", data: comment });
+            if (history) {
                 res.status(201).json({ message: "Comment addded successfully", comments: comments })
-            }else{
+            } else {
                 res.status(500).json({ message: "Comment addition unsuccessfull", error: 'Internal server error', comments: comments });
             }
         } else {
@@ -478,7 +494,7 @@ async function updateBugStatus(req, res) {
             const bugUpdate = await Bug.updateOne({ _id: castedId }, { $set: { ...updatedData, dev_status: dev_status, current_status: dev_status } });
             if (bugUpdate) {
                 // add history
-                const history  = BugHistory.create({bugId:bugId, by:email, type:"STATUS", data:dev_status})
+                const history = BugHistory.create({ bugId: bugId, by: email, type: "STATUS", data: dev_status })
                 res.status(200).json({ message: "Status updated successfully", updated: bugUpdate });
             } else {
                 res.status(500).json({ message: "Not updated" })
@@ -488,8 +504,8 @@ async function updateBugStatus(req, res) {
             const { qa_status } = req.body;
             const bugUpdate = await Bug.updateOne({ _id: castedId }, { $set: { ...updatedData, qa_status: qa_status, current_status: qa_status } });
             if (bugUpdate) {
-                 // add history
-                 const history  = BugHistory.create({bugId:bugId, by:email, type:"STATUS", data:qa_status})
+                // add history
+                const history = BugHistory.create({ bugId: bugId, by: email, type: "STATUS", data: qa_status })
                 res.status(200).json({ message: "Status updated successfully", updated: bugUpdate });
             } else {
                 res.status(500).json({ message: "Not updated" })
@@ -527,23 +543,37 @@ async function getStatusCount(req, res) {
     }
 }
 
-async function getHistory(req,res){
-    const id= req.params.bugId;
+async function getHistory(req, res) {
+    const id = req.params.bugId;
     const history = await getBugHistory(id);
-    if(history){
-        res.status(200).json({message : "History found", history:history})
+    if (history) {
+        res.status(200).json({ message: "History found", history: history })
+    } else {
+        res.status(404).json({ message: "History not found", history: history });
+    }
+}
+
+async function getEmployeeAttendance(req, res) {
+    const email = req.user.email;
+    const page = req.query.page;
+    const pageSize = req.query.pageSize;
+    const [totalItems,attendance] = await getAllAttendance(email, page, pageSize)
+    if(attendance){
+        res.status(200).json({message:"Attendance", attendance:attendance, page:page,totalPages: Math.ceil(totalItems / pageSize)})
     }else{
-        res.status(404).json({message : "History not found", history:history});
+        res.status(404).json({message:"No data found"})
     }
 }
 
 // No route functions
 
-async function getAllAttendance(email) {
+async function getAllAttendance(email, page, pageSize) {
     try {
-        const result = await Attendance.find({ employeeEmail: email }).sort({ today: -1 });
+        // const result = await Attendance.find({ employeeEmail: email }).sort({ today: -1 });
+        const totalItems = await Attendance.countDocuments({employeeEmail:email});
+        const result = await Attendance.find({ employeeEmail: email }).skip((page - 1) * pageSize).limit(pageSize).sort({ today: -1 });
         if (result) {
-            return result;
+            return [totalItems,result];
         } else {
             return null;
         }
@@ -618,9 +648,9 @@ async function matchFace(email, image) {
             if (distance > bestDistance) {
                 bestDistance = distance;
                 bestMatch = userFaceData;
-                }
             }
-            console.log("Best distance :" , bestDistance);
+        }
+        console.log("Best distance :", bestDistance);
 
         if (bestDistance < matchDistance) {
             return true;
@@ -705,9 +735,11 @@ async function getProject(projectId) {
 
 }
 
-async function getProjectBugs(projectId) {
+async function getProjectBugs(projectId, page, pageSize) {
+    const castedpageSize = parseInt(pageSize);
     try {
         // const result = await Bug.find({ projectId: projectId });
+        const totalItems = await Bug.countDocuments({projectId: projectId});
         const result = await Bug.aggregate([
             {
                 $match: {
@@ -765,9 +797,9 @@ async function getProjectBugs(projectId) {
                     "latest_update": 1
                 }
             }
-        ]).sort({ latest_update: -1 });
+        ]).skip( (page-1) * pageSize ).limit(castedpageSize).sort({ latest_update: -1 });
         if (result) {
-            return result;
+            return [result,totalItems];
         } else {
             return null;
         }
@@ -789,15 +821,15 @@ async function markAsViewed(bugId) {
     }
 }
 
-async function getBugHistory(bugId){
-    try{
+async function getBugHistory(bugId) {
+    try {
         const history = await BugHistory.aggregate([
             {
                 $match: {
                     bugId: bugId
                 }
-            },{
-                $lookup:{
+            }, {
+                $lookup: {
                     from: "employees",
                     localField: "by",
                     foreignField: "email",
@@ -805,18 +837,18 @@ async function getBugHistory(bugId){
                 }
             },
             {
-                $unwind:"$employee"
+                $unwind: "$employee"
             },
             {
-                $project:{
-                    "bugId" : 1,
-                    "by":1,
-                    "type":1,
-                    "data":1,
-                    "emp_f_name" : "$employee.firstName",
-                    "emp_l_name" : "$employee.lastName",
-                    "emp_profile" : "$employee.profileImg",
-                    "time" :1
+                $project: {
+                    "bugId": 1,
+                    "by": 1,
+                    "type": 1,
+                    "data": 1,
+                    "emp_f_name": "$employee.firstName",
+                    "emp_l_name": "$employee.lastName",
+                    "emp_profile": "$employee.profileImg",
+                    "time": 1
                 }
             }
         ])
@@ -826,7 +858,7 @@ async function getBugHistory(bugId){
         } else {
             return null;
         }
-    }catch(e){
+    } catch (e) {
         console.log("error :", e);
         return null;
     }
@@ -858,3 +890,5 @@ exports.getAllComments = getAllComments;
 exports.updateBugStatus = updateBugStatus;
 exports.getStatusCount = getStatusCount;
 exports.getHistory = getHistory;
+exports.getEmployeeAttendance = getEmployeeAttendance;
+exports.getBugs = getBugs;

@@ -13,15 +13,13 @@ export function SingleProject() {
     const [showBug, setShowBug] = useState(false);
     const [project, setProject] = useState([]);
     const [countData, setCountData] = useState([]);
+
+    // pagination in bugs
     const [bugs, setBugs] = useState([]);
-
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
-
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = bugs.slice(indexOfFirstItem, indexOfLastItem);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+    const [totalPages, settotalPages] = useState(0);
+    const [paginateLoader, setPaginateLoader] = useState(false);
 
     useEffect(() => {
         axios({
@@ -32,7 +30,6 @@ export function SingleProject() {
             }
         }).then((response) => {
             setProject(response.data.details[0]);
-            setBugs(response.data.bugs)
             console.log(response.data);
             console.log("Role :", response.data.role)
             if (response.data.role == "Tester") {
@@ -59,6 +56,29 @@ export function SingleProject() {
         })
     }, [])
 
+    useEffect(() => {
+        setPaginateLoader(true);
+        axios({
+            url: `http://localhost:8080/employee/project/bug?projectId=${projectId}&page=${page}&pageSize=${pageSize}`,
+            method: "GET",
+            headers: {
+                "Content-Type": 'application-json',
+                "token": token
+            }
+        }).then((response) => {
+            console.log("Resposne of bugs :", response.data)
+            if (response.status === 200) {
+                setBugs(response.data?.bugs);
+                settotalPages(response.data?.totalPages)
+            }
+            setPaginateLoader(false);
+        }).catch((err) => {
+            if (response.err && response.err.status === 404) {
+                console.log("No bugs found");
+            }
+            setPaginateLoader(false);
+        })
+    }, [page, pageSize])
     return (
         <>
             <div className="d-flex">
@@ -187,73 +207,92 @@ export function SingleProject() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {currentItems.map((bug, index) => {
-                                        return (
-                                            <tr>
-                                                <td>
-                                                    <div>{index + 1}</div>
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm bg-light rounded p-2">
-                                                            <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
-                                                        </div>
-                                                        <div class="ps-3">
-                                                            <h5 class="text-truncate font-size-14">
-                                                                <a href="javascript: void(0);" class="text-dark">{bug.title ?? ""}</a>
-                                                            </h5>
-                                                            <p class="text-muted mb-0 text-truncate" style={{ "width": "250px" }}>{bug.description ?? " "}</p>
-                                                        </div>
-                                                        {!bug.isViewed && <>
-                                                            <span className="badge bg-danger" style={{ "marginLeft": "auto", "alignSelf": "start" }}>New</span>
-                                                        </>
-                                                        }
+                                    {paginateLoader ? <>
+                                        <tr>
+                                            <td colspan="8">
+                                                <div className="d-flex my-3 justify-content-center w-100">
+                                                    <div class="spinner-grow spinner-grow-sm mx-2" role="status">
+                                                        <span class="sr-only">Loading...</span>
                                                     </div>
-                                                </td>
-                                                <td>{toISTLocaleString(bug.raised_on)}</td>
-                                                <td>{bug.updated_by != null ? <>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm bg-light rounded p-2">
-                                                            <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
-                                                        </div>
-                                                        <div class="ps-3">
-                                                            <h5 class="text-truncate font-size-12 m-0">
-                                                                <a href="javascript: v  oid(0);" class="text-dark">{bug.updatedByName + " " + bug.updatedByLastName}</a>
-                                                            </h5>
-                                                            <p class="text-muted mb-0">{Status(bug.current_status)}</p>
-                                                            <small class="text-muted mb-0">{toISTLocaleString(bug.latest_update)}</small>
-                                                        </div>
+                                                    <div class="spinner-grow spinner-grow-sm mx-2" role="status">
+                                                        <span class="sr-only">Loading...</span>
                                                     </div>
-                                                </> : "N/A"}</td>
-                                                <td>{Status(bug.current_status)}</td>
-                                                <td>{Priority(bug.priority)}</td>
-                                                <td>
-                                                    <div class="avatar-group">
-                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>
-                                                            <img src={bug.assignedToProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.raisedByName}>
-                                                            <img src={bug.raisedByProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
+                                                    <div class="spinner-grow spinner-grow-sm mx-2" role="status">
+                                                        <span class="sr-only">Loading...</span>
                                                     </div>
-                                                </td>
-                                                <td><ul class="list-unstyled hstack gap-1 mb-0">
-                                                    <Link to={`/bug/${bug._id}`} >
-                                                        <li data-bs-toggle="tooltip" data-bs-placement="top" title="View">
-                                                            <span class="btn btn-sm btn-soft-primary"><i class="fa-solid fa-pen"></i></span>
-                                                        </li>
-                                                    </Link>
-                                                </ul></td>
-                                            </tr>
-                                        )
-                                    })}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </> : <>
+                                        {bugs.map((bug, index) => {
+                                            return (
+                                                <tr>
+                                                    <td>
+                                                        <div>{((page - 1) * pageSize) + (index + 1)}</div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm bg-light rounded p-2">
+                                                                <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                            </div>
+                                                            <div class="ps-3">
+                                                                <h5 class="text-truncate font-size-14">
+                                                                    <a href="javascript: void(0);" class="text-dark">{bug.title ?? ""}</a>
+                                                                </h5>
+                                                                <p class="text-muted mb-0 text-truncate" style={{ "width": "250px" }}>{bug.description ?? " "}</p>
+                                                            </div>
+                                                            {!bug.isViewed && <>
+                                                                <span className="badge bg-danger" style={{ "marginLeft": "auto", "alignSelf": "start" }}>New</span>
+                                                            </>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                    <td>{toISTLocaleString(bug.raised_on)}</td>
+                                                    <td>{bug.updated_by != null ? <>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm bg-light rounded p-2">
+                                                                <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                            </div>
+                                                            <div class="ps-3">
+                                                                <h5 class="text-truncate font-size-12 m-0">
+                                                                    <a href="javascript: v  oid(0);" class="text-dark">{bug.updatedByName + " " + bug.updatedByLastName}</a>
+                                                                </h5>
+                                                                <p class="text-muted mb-0">{Status(bug.current_status)}</p>
+                                                                <small class="text-muted mb-0">{toISTLocaleString(bug.latest_update)}</small>
+                                                            </div>
+                                                        </div>
+                                                    </> : "N/A"}</td>
+                                                    <td>{Status(bug.current_status)}</td>
+                                                    <td>{Priority(bug.priority)}</td>
+                                                    <td>
+                                                        <div class="avatar-group">
+                                                            <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>
+                                                                <img src={bug.assignedToProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
+                                                            </a>
+                                                            <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.raisedByName}>
+                                                                <img src={bug.raisedByProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td><ul class="list-unstyled hstack gap-1 mb-0">
+                                                        <Link to={`/bug/${bug._id}`} >
+                                                            <li data-bs-toggle="tooltip" data-bs-placement="top" title="View">
+                                                                <span class="btn btn-sm btn-soft-primary"><i class="fa-solid fa-pen"></i></span>
+                                                            </li>
+                                                        </Link>
+                                                    </ul></td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </>}
+
                                 </tbody>
                             </table>
                             <div className="d-flex justify-content-end">
-                                <button className="btn btn-primary mx-2" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
+                                <button className="btn btn-primary mx-2" onClick={() => setPage(page - 1)} disabled={page === 1}>
                                     Previous
                                 </button>
-                                <button className="btn btn-primary mx-2" onClick={() => paginate(currentPage + 1)} disabled={indexOfLastItem >= bugs.length}>
+                                <button className="btn btn-primary mx-2" onClick={() => setPage(page + 1)} disabled={page === totalPages}>
                                     Next
                                 </button>
                             </div>
