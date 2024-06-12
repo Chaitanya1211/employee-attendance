@@ -12,13 +12,11 @@ export function EmployeeHome() {
     const [loginModal, setLoginModal] = useState(false);
     const [logoutModal, setLogoutModal] = useState(false);
     const [token, setToken] = useState(localStorage.getItem('token') || null);
-    const [home, setHome] = useState([]);
     const [profile, setProfile] = useState([]);
     const [todayStatus, setTodayStatus] = useState([]);
-    const [attendance, setAttendance] = useState([]);
     const [image, setImage] = useState();
     const [loader, setLoader] = useState(false);
-
+    const [reRender, setReRender] = useState(true);
     useEffect(() => {
         axios({
             url: "http://localhost:8080/employee/home",
@@ -30,10 +28,8 @@ export function EmployeeHome() {
         }).then((response) => {
             console.log(response);
             if (response.status === 200) {
-                setHome(response.data);
                 setProfile(response?.data?.profile);
                 setTodayStatus(response.data.todayStatus);
-                setAttendance(response.data.attendance);
             }
         }).catch((error) => {
             console.log("Error :", error);
@@ -74,8 +70,8 @@ export function EmployeeHome() {
             console.log(response);
             if (response.status === 200) {
                 setTodayStatus(response.data.todayStatus);
-                setAttendance(response.data.attendance);
                 setLoginModal(false);
+                setReRender((prev) => !prev);
             }
             setLoader(false);
         }).catch((error) => {
@@ -107,7 +103,7 @@ export function EmployeeHome() {
             console.log(response);
             if (response.status === 200) {
                 setTodayStatus(response.data.todayStatus);
-                setAttendance(response.data.attendance);
+                setReRender((prev) => !prev);
             }
         }).catch((error) => {
             console.log("Error : ", error);
@@ -210,7 +206,7 @@ export function EmployeeHome() {
                                 </div>
                             </div>
                         </div>
-                        <AttendanceList />
+                        <AttendanceList render={reRender} />
 
                     </div>
                 </div>

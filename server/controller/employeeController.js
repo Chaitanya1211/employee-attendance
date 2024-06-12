@@ -163,12 +163,7 @@ async function markLogin(req, res) {
             const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
             if (result) {
                 // attendance marked
-                let attendance = await getAllAttendance(email);
-                if (attendance.length != 0) {
-                    res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: attendance })
-                } else {
-                    res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: [] })
-                }
+                    res.status(200).json({ message: "Attendance marked", todayStatus: result })
             } else {
                 // attendance not marked
                 res.status(500).json({ message: "Attendance not marked. Internal server error" })
@@ -196,14 +191,9 @@ async function markLogout(req, res) {
     try {
         const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
         if (result.nModified != 0) {
-            let attendance = await getAllAttendance(email);
-            if (attendance.length != 0) {
-                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result, attendance: attendance })
-            } else {
-                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result, attendance: attendance })
-            }
+                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result })
         } else {
-            res.status(500).json({ message: "Attendance not marked. Internal server error" })
+                res.status(500).json({ message: "Attendance not marked. Internal server error" })
         }
     } catch (error) {
         console.error('Internal server error', error);

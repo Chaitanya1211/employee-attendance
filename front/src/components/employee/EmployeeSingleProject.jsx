@@ -7,6 +7,7 @@ import { toISTLocaleString } from "../../helper/dates";
 import defaultImage from "../../assets/defaultImage.jpg";
 import { BugCounts } from "./employeeComponents/bugCount";
 import { BackBtn } from "../../helper/backButton";
+import { TableLoader } from "./employeeComponents/TableLoader";
 export function SingleProject() {
     const { projectId } = useParams();
     const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -21,6 +22,11 @@ export function SingleProject() {
     const [totalPages, settotalPages] = useState(0);
     const [paginateLoader, setPaginateLoader] = useState(false);
 
+    // filter variables
+    const [type, setType] = useState('');
+    const [priority, setPriority] = useState('');
+    const [status, setStatus] = useState('');
+    
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/project/${projectId}`,
@@ -171,11 +177,40 @@ export function SingleProject() {
                             </div>
                         </div>
                         {/* Bugs grid */}
-                        <div class="row mb-3">
+                        <div class="row">
                             <div class="col-sm">
-                                <div class="search-box me-2 d-inline-block">
-                                    <div class="position-relative">
-                                        <h4 class="mb-0 font-size-18">Bug List</h4>
+                                <div class="position-relative">
+                                    <h4 class="mb-0 font-size-18">Bug List</h4>
+                                </div>
+                                <div className="row g-3 my-1">
+                                    <div className="col-lg-3">
+                                        <label htmlFor="type">Type</label>
+                                        <select class="form-select" id="type">
+                                            <option selected value="">Type</option>
+                                            <option value="me">All</option>
+                                            <option value="self">Assigned to me</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label htmlFor="priority">Priority</label>
+                                        <select class="form-select" id="priority">
+                                            <option selected value="">Priority</option>
+                                            <option value="HIGH">High</option>
+                                            <option value="MEDIUM">Medium</option>
+                                            <option value="LOW">Low</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label htmlFor="curr_status">Status</label>
+                                        <select class="form-select" id="curr_status">
+                                            <option selected value="">Status</option>
+                                            <option value="OPEN">Open</option>
+                                            <option value="RECHECKING">Rechecking</option>
+                                            <option value="CLOSED">Closed</option>
+                                            <option value="INVALID">Invalid</option>
+                                            <option value="INPROGRESS">In-Progress</option>
+                                            <option value="DONE">Done</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -183,7 +218,7 @@ export function SingleProject() {
                             {/* If role==developer then not show button */}
 
                             {showBug &&
-                                <div class="col-sm-auto">
+                                <div class="col-sm-auto d-flex align-items-center">
                                     <div class="text-sm-end">
                                         <a href={`http://localhost:5173/raiseBug/${project._id}`} class="btn btn-success btn-rounded" id="addProject-btn"><i class="fa-solid fa-bug me-2"></i> Raise Bug</a>
                                     </div>
@@ -210,17 +245,7 @@ export function SingleProject() {
                                     {paginateLoader ? <>
                                         <tr>
                                             <td colspan="8">
-                                                <div className="d-flex my-3 justify-content-center w-100">
-                                                    <div class="spinner-grow spinner-grow-sm mx-2" role="status">
-                                                        <span class="sr-only">Loading...</span>
-                                                    </div>
-                                                    <div class="spinner-grow spinner-grow-sm mx-2" role="status">
-                                                        <span class="sr-only">Loading...</span>
-                                                    </div>
-                                                    <div class="spinner-grow spinner-grow-sm mx-2" role="status">
-                                                        <span class="sr-only">Loading...</span>
-                                                    </div>
-                                                </div>
+                                                <TableLoader />
                                             </td>
                                         </tr>
                                     </> : <>
