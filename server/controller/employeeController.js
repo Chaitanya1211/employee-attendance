@@ -310,13 +310,14 @@ async function raiseBug(req, res) {
 }
 
 async function getBugs(req,res){
+    console.log("Get bugs api called");
+    const email = req.user.email;
     const projectId = req.query.projectId;
     const page = req.query.page;
     const pageSize = req.query.pageSize;
-    console.log("Page :", page);
-    console.log("Page size :", pageSize);
-    const [bugs,totalItems] = await getProjectBugs(projectId, page,pageSize);
-    // console.log("Bugs :", bugs)
+    const {type, priority, curr_status} = req.body;
+    console.log("Rwquest body", req.body);
+    const [bugs,totalItems] = await getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize);
     if(bugs){
         res.status(200).json({message:"Bugs found", bugs:bugs, page:page,totalPages: Math.ceil(totalItems / pageSize)})
     }else{
@@ -525,7 +526,6 @@ async function getStatusCount(req, res) {
         counts["inprogress"] = inprogress;
         const recheck = await Bug.countDocuments({ $and: [{ current_status: "RECHECKING" }, { projectId: castedId }] });
         counts["rechecking"] = recheck;
-        console.log(counts);
         res.status(200).json({ message: "Details found", count: counts })
     } catch (error) {
         console.error('Internal server error', error);
@@ -554,6 +554,19 @@ async function getEmployeeAttendance(req, res) {
         res.status(404).json({message:"No data found"})
     }
 }
+
+// async function getFilteredBugs(req,res){
+//     const email = req.user.email;
+//     const page = req.query.page;
+//     const pageSize = req.query.pageSize;
+//     const projectId = req.query.projectId;
+//     const {type, priority, curr_status} = req.body;
+//     console.log(req.body);
+//     const [result, totalItems] = await filterBugs(projectId, email ,type, priority, curr_status, page, pageSize);
+//     if(result){
+//         res.json({message:"bugs found", bugs:result, totalItems : totalItems})
+//     }
+// }
 
 // No route functions
 
@@ -724,17 +737,36 @@ async function getProject(projectId) {
     }
 
 }
+const buildQuery = (projectId, curr_status, priority, type, email) => {
+    let query = {
+      projectId: projectId,
+    };
+  
+    if (curr_status != '') {
+      query.current_status = curr_status;
+    }
+  
+    if (priority != '') {
+      query.priority = priority;
+    }
+  
+    if (type === "self") {
+      query.assignedTo = email;
+    }
+  
+    return query;
+};
 
-async function getProjectBugs(projectId, page, pageSize) {
+async function getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize) {
     const castedpageSize = parseInt(pageSize);
+    const query = buildQuery(projectId, curr_status, priority, type, email);
+    console.log("Query :", query);
     try {
         // const result = await Bug.find({ projectId: projectId });
         const totalItems = await Bug.countDocuments({projectId: projectId});
         const result = await Bug.aggregate([
             {
-                $match: {
-                    projectId: projectId
-                }
+                $match: query
             },
             {
                 $lookup: {
@@ -798,6 +830,79 @@ async function getProjectBugs(projectId, page, pageSize) {
         return null;
     }
 }
+
+// async function filterBugs(projectId, email ,type, priority, curr_status, page, pageSize){
+//     const castedpageSize = parseInt(pageSize);
+//     const query = buildQuery(projectId, curr_status, priority, type, email);
+//     try {
+//         // const result = await Bug.find({ projectId: projectId });
+//         const totalItems = await Bug.countDocuments({projectId: projectId});
+//         const result = await Bug.aggregate([
+//             {
+//                 $match: query
+//             },
+//             {
+//                 $lookup: {
+//                     from: "employees",
+//                     localField: "raisedBy",
+//                     foreignField: "email",
+//                     as: "raising_employee"
+//                 }
+//             }, {
+//                 $unwind: "$raising_employee"
+//             },
+//             {
+//                 $lookup: {
+//                     from: "employees",
+//                     localField: "assignedTo",
+//                     foreignField: "email",
+//                     as: 'assigned_employee'
+//                 }
+//             }, {
+//                 $unwind: "$assigned_employee"
+//             }, {
+//                 $lookup: {
+//                     from: "employees",
+//                     localField: "updated_by",
+//                     foreignField: "email",
+//                     as: 'updated_employee'
+//                 }
+//             }, {
+//                 $unwind: {
+//                     path: "$updated_employee",
+//                     preserveNullAndEmptyArrays: true
+//                 }
+//             }, {
+//                 $project: {
+//                     "title": 1,
+//                     "description": 1,
+//                     "raisedByName": "$raising_employee.firstName",
+//                     "raisedByProfile": "$raising_employee.profileImg",
+//                     "assignedToName": "$assigned_employee.firstName",
+//                     "assignedToProfile": "$assigned_employee.profileImg",
+//                     "raised_on": 1,
+//                     "priority": 1,
+//                     "current_status": 1,
+//                     "isViewed": 1,
+//                     "updated_by": 1,
+//                     "updatedByName": "$updated_employee.firstName",
+//                     "updatedByLastName": "$updated_employee.lastName",
+//                     "updatedByProfile": "$updated_employee.profileImg",
+//                     "updatedAt": 1,
+//                     "latest_update": 1
+//                 }
+//             }
+//         ]).skip( (page-1) * pageSize ).limit(castedpageSize).sort({ latest_update: -1 });
+//         if (result) {
+//             return [result,totalItems];
+//         } else {
+//             return null;
+//         }
+//     } catch (error) {
+//         console.log("Error in bugs :", error)
+//         return null;
+//     } 
+// }
 
 async function markAsViewed(bugId) {
     const data = {
@@ -882,3 +987,4 @@ exports.getStatusCount = getStatusCount;
 exports.getHistory = getHistory;
 exports.getEmployeeAttendance = getEmployeeAttendance;
 exports.getBugs = getBugs;
+// exports.getFilteredBugs = getFilteredBugs;

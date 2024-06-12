@@ -23,10 +23,30 @@ export function SingleProject() {
     const [paginateLoader, setPaginateLoader] = useState(false);
 
     // filter variables
-    const [type, setType] = useState('');
-    const [priority, setPriority] = useState('');
-    const [status, setStatus] = useState('');
-    
+    const [type, setType] = useState("all");
+    const [priority, setPriority] = useState("");
+    const [status, setStatus] = useState("");
+    const [filterState, setFilterState] = useState(false);
+
+    const handleChange = (event) => {
+        const id = event.target.id;
+        const value = event.target.value;
+        if (id === "type") {
+            setType(value);
+        } else if (id === "priority") {
+            setPriority(value)
+        } else if (id === "curr_status") {
+            setStatus(value);
+        }
+        setFilterState((prev) => !prev)
+    }
+    useEffect(() => {
+        console.log("Type :", type);
+        console.log("Priority :", priority);
+        console.log("Status :", status);
+        // call the api here
+    }, [filterState]);
+
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/project/${projectId}`,
@@ -46,6 +66,7 @@ export function SingleProject() {
         })
     }, [])
 
+    // bug count api
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/project/getBugCount/${projectId}`,
@@ -62,15 +83,26 @@ export function SingleProject() {
         })
     }, [])
 
+    // Bug list api
     useEffect(() => {
         setPaginateLoader(true);
+        fetchBugs();
+    }, [page, pageSize, filterState])
+
+    function fetchBugs() {
+        const filterData = {
+            "type": type,
+            "priority": priority,
+            "curr_status": status
+        }
         axios({
             url: `http://localhost:8080/employee/project/bug?projectId=${projectId}&page=${page}&pageSize=${pageSize}`,
-            method: "GET",
+            method: "POST",
+            data: filterData,
             headers: {
-                "Content-Type": 'application-json',
+                "Content-Type": 'application/json',
                 "token": token
-            }
+            },
         }).then((response) => {
             console.log("Resposne of bugs :", response.data)
             if (response.status === 200) {
@@ -84,7 +116,7 @@ export function SingleProject() {
             }
             setPaginateLoader(false);
         })
-    }, [page, pageSize])
+    }
     return (
         <>
             <div className="d-flex">
@@ -185,16 +217,15 @@ export function SingleProject() {
                                 <div className="row g-3 my-1">
                                     <div className="col-lg-3">
                                         <label htmlFor="type">Type</label>
-                                        <select class="form-select" id="type">
-                                            <option selected value="">Type</option>
-                                            <option value="me">All</option>
+                                        <select class="form-select" value={type} id="type" onChange={handleChange}>
+                                            <option value="all" selected>All</option>
                                             <option value="self">Assigned to me</option>
                                         </select>
                                     </div>
                                     <div className="col-lg-3">
                                         <label htmlFor="priority">Priority</label>
-                                        <select class="form-select" id="priority">
-                                            <option selected value="">Priority</option>
+                                        <select class="form-select" id="priority" value={priority} onChange={handleChange}>
+                                            <option value="">Priority</option>
                                             <option value="HIGH">High</option>
                                             <option value="MEDIUM">Medium</option>
                                             <option value="LOW">Low</option>
@@ -202,8 +233,8 @@ export function SingleProject() {
                                     </div>
                                     <div className="col-lg-3">
                                         <label htmlFor="curr_status">Status</label>
-                                        <select class="form-select" id="curr_status">
-                                            <option selected value="">Status</option>
+                                        <select class="form-select" id="curr_status" value={status} onChange={handleChange}>
+                                            <option value="">Status</option>
                                             <option value="OPEN">Open</option>
                                             <option value="RECHECKING">Rechecking</option>
                                             <option value="CLOSED">Closed</option>
@@ -249,7 +280,7 @@ export function SingleProject() {
                                             </td>
                                         </tr>
                                     </> : <>
-                                        {bugs.map((bug, index) => {
+                                        {bugs.length != 0 ? bugs.map((bug, index) => {
                                             return (
                                                 <tr>
                                                     <td>
@@ -308,9 +339,10 @@ export function SingleProject() {
                                                     </ul></td>
                                                 </tr>
                                             )
-                                        })}
+                                        }) : <> <tr>
+                                            <td colspan="8" class="text-center"> <h4>No bugs found</h4> </td></tr> </>
+                                        }
                                     </>}
-
                                 </tbody>
                             </table>
                             <div className="d-flex justify-content-end">

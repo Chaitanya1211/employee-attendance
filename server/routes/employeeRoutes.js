@@ -13,7 +13,7 @@ router.get("/home", auth, employee.home);
 router.get("/attendances", auth,employee.getEmployeeAttendance);
 router.get('/getRole',auth, employee.getRole);
 router.get("/projects",auth, employee.getAllProjects);
-router.get('/project/bug', auth, employee.getBugs);
+router.post('/project/bug', auth, employee.getBugs);
 router.get("/project/:projectId",auth,employee.getProjectDetails);
 router.post('/newBug',auth,upload.any() ,employee.raiseBug);
 router.get('/allEmployees',auth, employee.allEmployees);
@@ -23,4 +23,5 @@ router.get('/bug/comments/:bugId',auth,employee.getAllComments);
 router.post('/bug/updateStatus',auth,employee.updateBugStatus);
 router.get('/project/getBugCount/:projectId',auth,employee.getStatusCount);
 router.get('/bug/history/:bugId', auth, employee.getHistory);
+// router.post('/filterBugs',auth,employee.getFilteredBugs);
 module.exports = router
