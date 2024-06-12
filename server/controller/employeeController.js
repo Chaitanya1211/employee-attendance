@@ -3,7 +3,6 @@ const mongoose = require("mongoose")
 const faceapi = require("face-api.js");
 const { Canvas, Image } = require('canvas');
 const canvas = require("canvas")
-const fileUpload = require("express-fileupload");
 faceapi.env.monkeyPatch({ Canvas, Image });
 const Employee = require("../models/employeeModel");
 const Attendance = require("../models/attendanceModel");
@@ -310,13 +309,11 @@ async function raiseBug(req, res) {
 }
 
 async function getBugs(req,res){
-    console.log("Get bugs api called");
     const email = req.user.email;
     const projectId = req.query.projectId;
     const page = req.query.page;
     const pageSize = req.query.pageSize;
     const {type, priority, curr_status} = req.body;
-    console.log("Rwquest body", req.body);
     const [bugs,totalItems] = await getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize);
     if(bugs){
         res.status(200).json({message:"Bugs found", bugs:bugs, page:page,totalPages: Math.ceil(totalItems / pageSize)})
@@ -555,19 +552,6 @@ async function getEmployeeAttendance(req, res) {
     }
 }
 
-// async function getFilteredBugs(req,res){
-//     const email = req.user.email;
-//     const page = req.query.page;
-//     const pageSize = req.query.pageSize;
-//     const projectId = req.query.projectId;
-//     const {type, priority, curr_status} = req.body;
-//     console.log(req.body);
-//     const [result, totalItems] = await filterBugs(projectId, email ,type, priority, curr_status, page, pageSize);
-//     if(result){
-//         res.json({message:"bugs found", bugs:result, totalItems : totalItems})
-//     }
-// }
-
 // No route functions
 
 async function getAllAttendance(email, page, pageSize) {
@@ -737,6 +721,7 @@ async function getProject(projectId) {
     }
 
 }
+
 const buildQuery = (projectId, curr_status, priority, type, email) => {
     let query = {
       projectId: projectId,
@@ -831,79 +816,6 @@ async function getProjectBugs(projectId,email,curr_status,priority, type ,page, 
     }
 }
 
-// async function filterBugs(projectId, email ,type, priority, curr_status, page, pageSize){
-//     const castedpageSize = parseInt(pageSize);
-//     const query = buildQuery(projectId, curr_status, priority, type, email);
-//     try {
-//         // const result = await Bug.find({ projectId: projectId });
-//         const totalItems = await Bug.countDocuments({projectId: projectId});
-//         const result = await Bug.aggregate([
-//             {
-//                 $match: query
-//             },
-//             {
-//                 $lookup: {
-//                     from: "employees",
-//                     localField: "raisedBy",
-//                     foreignField: "email",
-//                     as: "raising_employee"
-//                 }
-//             }, {
-//                 $unwind: "$raising_employee"
-//             },
-//             {
-//                 $lookup: {
-//                     from: "employees",
-//                     localField: "assignedTo",
-//                     foreignField: "email",
-//                     as: 'assigned_employee'
-//                 }
-//             }, {
-//                 $unwind: "$assigned_employee"
-//             }, {
-//                 $lookup: {
-//                     from: "employees",
-//                     localField: "updated_by",
-//                     foreignField: "email",
-//                     as: 'updated_employee'
-//                 }
-//             }, {
-//                 $unwind: {
-//                     path: "$updated_employee",
-//                     preserveNullAndEmptyArrays: true
-//                 }
-//             }, {
-//                 $project: {
-//                     "title": 1,
-//                     "description": 1,
-//                     "raisedByName": "$raising_employee.firstName",
-//                     "raisedByProfile": "$raising_employee.profileImg",
-//                     "assignedToName": "$assigned_employee.firstName",
-//                     "assignedToProfile": "$assigned_employee.profileImg",
-//                     "raised_on": 1,
-//                     "priority": 1,
-//                     "current_status": 1,
-//                     "isViewed": 1,
-//                     "updated_by": 1,
-//                     "updatedByName": "$updated_employee.firstName",
-//                     "updatedByLastName": "$updated_employee.lastName",
-//                     "updatedByProfile": "$updated_employee.profileImg",
-//                     "updatedAt": 1,
-//                     "latest_update": 1
-//                 }
-//             }
-//         ]).skip( (page-1) * pageSize ).limit(castedpageSize).sort({ latest_update: -1 });
-//         if (result) {
-//             return [result,totalItems];
-//         } else {
-//             return null;
-//         }
-//     } catch (error) {
-//         console.log("Error in bugs :", error)
-//         return null;
-//     } 
-// }
-
 async function markAsViewed(bugId) {
     const data = {
         isViewed: true
@@ -987,4 +899,3 @@ exports.getStatusCount = getStatusCount;
 exports.getHistory = getHistory;
 exports.getEmployeeAttendance = getEmployeeAttendance;
 exports.getBugs = getBugs;
-// exports.getFilteredBugs = getFilteredBugs;
