@@ -2,11 +2,11 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
-export function EmployeeSidebar({ name }) {
+export function EmployeeSidebar() {
     const [token, setToken] = useState(localStorage.getItem('token') || "");
     const [role, setRole] = useState();
     const location = useLocation(); // Hook to get the current location
-
+    const [details, setDetails] = useState([]);
     useEffect(() => {
         axios({
             url: "http://localhost:8080/employee/getRole",
@@ -16,6 +16,8 @@ export function EmployeeSidebar({ name }) {
             }
         }).then((response) => {
             setRole(response.data.role);
+            setDetails(response.data?.details[0]);
+            console.log(response.data);
         }).catch((error) => {
             console.log("Error:", error);
         });
@@ -32,10 +34,11 @@ export function EmployeeSidebar({ name }) {
 
     return (
         <div className="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style={{ height: "100vh" }}>
-            <NavLink to="/admin/home" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-                <span className="fs-4">{name ?? "Employee"}</span>
+            <NavLink to="/home" className="mb-3 mb-md-0 text-white text-decoration-none">
+                <p className="fs-4 mb-0">{ details?.firstName +  " " + details?.lastName}</p>
+                <p className="mb-1">{details?.role}</p>
             </NavLink>
-            <hr />
+            <hr className="mt-2"/>
             <ul className="nav nav-pills flex-column mb-auto">
                 <li className="nav-item">
                     <NavLink exact to="/home" className="nav-link text-white" activeClassName="active">

@@ -91,9 +91,11 @@ async function login(req, res) {
 }
 
 async function getRole(req, res) {
+    const email=req.user.email;
+    const details = await Employee.find({email:email},"firstName lastName profileImg role");
     try {
         const role = req.user.role;
-        res.status(200).json({ message: "Role found", role: role });
+        res.status(200).json({ message: "Role found", role: role , details:details });
     } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
