@@ -94,6 +94,61 @@ async function inviteEmployee(req, res) {
   })
 }
 
+async function markLogin(req, res) {
+  try{
+    const { email } = req.body;
+    const current = getCurrentDate();
+    let todayStatus = await Attendance.findOne({ $and: [{ employeeEmail: email }, { today: current }] });
+    const currentDate = getCurrentDate();
+    const currentDateTime = getCurrentDateTime();
+  
+    if (!todayStatus) {
+      const showDate = getCurrentDateAndDayFormatted();
+      const newToday = new Attendance({
+        employeeEmail: email,
+        showDate: showDate,
+        today: currentDate,
+        isLoggedIn: true,
+        isLoggedOut: false
+      });
+      todayStatus = await newToday.save();
+      
+    } else {
+      // update the exisiting one
+      const updateFields = {
+        login: currentDateTime,
+        isLoggedIn: true
+      };
+      const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
+    }
+  
+    res.status(200).json({ message: "Attendance marked" })
+  }catch(error){
+    res.status(500).json({message:"Not marked"})
+  }
+
+}
+
+async function markLogout(req, res) {
+    const {email} = req.body;
+    const currentDate = getCurrentDate();
+    const currentDateTime = getCurrentDateTime();
+    const updateFields = {
+        logout: currentDateTime,
+        isLoggedOut: true
+    };
+    try {
+        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
+        if (result.nModified != 0) {
+                res.status(200).json({ message: "Attendance marked. Logged out" })
+        } else {
+                res.status(500).json({ message: "Attendance not marked. Internal server error" })
+        }
+    } catch (error) {
+        console.error('Internal server error', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
 async function allEmployees(req, res) {
   try {
     const employees = await Employee.find({}, "firstName lastName email contactNumber profileImg role");
@@ -108,15 +163,28 @@ async function allEmployees(req, res) {
   }
 }
 
+async function getEmployeeAttendance(req, res) {
+  const { email } = req.body;
+  const page = req.query.page;
+  const pageSize = req.query.pageSize;
+  console.log("Email :", email);
+  console.log("page :", page);
+  console.log("Page size :", pageSize)
+  const [total, attendance] = await employeeAttendance(email, page, pageSize);
+  if (attendance) {
+    res.status(200).json({ message: "Attendance found", attendance: attendance, totalPages: Math.ceil(total / pageSize) });
+  } else {
+    res.status(404).json({ message: "No attendance" })
+  }
+}
+
 async function getSingleEmployee(req, res) {
   const { employee } = req.body;
-  console.log("request made")
   try {
     // get employee profile
     const profile = await Employee.findOne({ email: employee });
     if (profile) {
-      const attendance = await Attendance.find({ employeeEmail: employee }).sort({ today: -1 });
-      res.status(200).json({ message: "Employee Found", profile: profile, attendance: attendance });
+      res.status(200).json({ message: "Employee Found", profile: profile });
     } else {
       res.status(404).json({ message: "Employee Not found" });
     }
@@ -125,7 +193,6 @@ async function getSingleEmployee(req, res) {
     console.error('Internal server error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
-  // get employee attendance
 
 }
 
@@ -221,79 +288,79 @@ async function getBugs(req, res) {
 async function bugDetails(req, res) {
   const tempBugId = req.params.bugId;
   const bugId = new mongoose.Types.ObjectId(req.params.bugId);
-      try {
-          const bug = await Bug.aggregate([{
-              $match: {
-                  _id: bugId
-              }
-          },
-          {
-              $lookup: {
-                  from: "employees",
-                  localField: "raisedBy",
-                  foreignField: "email",
-                  as: "raising_employee"
-              }
-          },
-          {
-              $unwind: "$raising_employee"
-          },
-          {
-              $lookup: {
-                  from: "employees",
-                  localField: "assignedTo",
-                  foreignField: "email",
-                  as: 'assigned_employee'
-              }
-          }, {
-              $unwind: "$assigned_employee"
-          }, {
-              $lookup: {
-                  from: "employees",
-                  localField: "updated_by",
-                  foreignField: "email",
-                  as: 'updated_employee'
-              }
-          }, {
-              $unwind: {
-                  path: "$updated_employee",
-                  preserveNullAndEmptyArrays: true
-              }
-          }, {
-              $project: {
-                  "title": 1,
-                  "description": 1,
-                  "images": 1,
-                  "raisedByName": "$raising_employee.firstName",
-                  "raisedBylastName": "$raising_employee.lastName",
-                  "raisedByProfile": "$raising_employee.profileImg",
-                  "assignedToName": "$assigned_employee.firstName",
-                  "assignedTolastName": "$assigned_employee.lastName",
-                  "assignedToProfile": "$assigned_employee.profileImg",
-                  "raised_on": 1,
-                  "priority": 1,
-                  "current_status": 1,
-                  "qa_status": 1,
-                  "dev_status": 1,
-                  "updated_by": 1,
-                  "updatedByName": "$updated_employee.firstName",
-                  "updatedByLastName": "$updated_employee.lastName",
-                  "updatedByProfile": "$updated_employee.profileImg",
-                  "updatedAt": 1,
-                  "latest_update": 1
-              }
-          }
-          ]);
-          if (bug.length != 0) {
-              const comments = await bugComments(tempBugId);
-              res.status(200).json({ message: "Bug found", bug: bug, comments: comments })
-          } else {
-              res.status(404).json({ message: "Bug not found" });
-          }
-      } catch (error) {
-          console.error('Internal server error', error);
-          res.status(500).json({ error: 'Internal server error' });
+  try {
+    const bug = await Bug.aggregate([{
+      $match: {
+        _id: bugId
       }
+    },
+    {
+      $lookup: {
+        from: "employees",
+        localField: "raisedBy",
+        foreignField: "email",
+        as: "raising_employee"
+      }
+    },
+    {
+      $unwind: "$raising_employee"
+    },
+    {
+      $lookup: {
+        from: "employees",
+        localField: "assignedTo",
+        foreignField: "email",
+        as: 'assigned_employee'
+      }
+    }, {
+      $unwind: "$assigned_employee"
+    }, {
+      $lookup: {
+        from: "employees",
+        localField: "updated_by",
+        foreignField: "email",
+        as: 'updated_employee'
+      }
+    }, {
+      $unwind: {
+        path: "$updated_employee",
+        preserveNullAndEmptyArrays: true
+      }
+    }, {
+      $project: {
+        "title": 1,
+        "description": 1,
+        "images": 1,
+        "raisedByName": "$raising_employee.firstName",
+        "raisedBylastName": "$raising_employee.lastName",
+        "raisedByProfile": "$raising_employee.profileImg",
+        "assignedToName": "$assigned_employee.firstName",
+        "assignedTolastName": "$assigned_employee.lastName",
+        "assignedToProfile": "$assigned_employee.profileImg",
+        "raised_on": 1,
+        "priority": 1,
+        "current_status": 1,
+        "qa_status": 1,
+        "dev_status": 1,
+        "updated_by": 1,
+        "updatedByName": "$updated_employee.firstName",
+        "updatedByLastName": "$updated_employee.lastName",
+        "updatedByProfile": "$updated_employee.profileImg",
+        "updatedAt": 1,
+        "latest_update": 1
+      }
+    }
+    ]);
+    if (bug.length != 0) {
+      const comments = await bugComments(tempBugId);
+      res.status(200).json({ message: "Bug found", bug: bug, comments: comments })
+    } else {
+      res.status(404).json({ message: "Bug not found" });
+    }
+  } catch (error) {
+    console.error('Internal server error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 
 }
 
@@ -301,9 +368,9 @@ async function getHistory(req, res) {
   const id = req.params.bugId;
   const history = await getBugHistory(id);
   if (history) {
-      res.status(200).json({ message: "History found", history: history })
+    res.status(200).json({ message: "History found", history: history })
   } else {
-      res.status(404).json({ message: "History not found", history: history });
+    res.status(404).json({ message: "History not found", history: history });
   }
 }
 
@@ -361,6 +428,38 @@ function emailTemplate(encryptedEmail) {
       <!-- end table -->
   </div>
 </div>`;
+}
+
+// async function makeAttendanceDoc(email) {
+//   const current = getCurrentDate();
+//   let todayStatus = await Attendance.findOne({ $and: [{ employeeEmail: email }, { today: current }] });
+//   if (!todayStatus) {
+//     const currentDate = getCurrentDate();
+//     const showDate = getCurrentDateAndDayFormatted();
+//     const newToday = new Attendance({
+//       employeeEmail: email,
+//       showDate: showDate,
+//       today: currentDate,
+//       isLoggedIn: false,
+//       isLoggedOut: false
+//     });
+//     todayStatus = await newToday.save();
+//     return true;
+
+//   }else{
+//     return false;
+//   }
+// }
+async function employeeAttendance(email, page, pageSize) {
+  try {
+    const totalAtt = await Attendance.countDocuments({ employeeEmail: email });
+    const attendance = await Attendance.find({ employeeEmail: email }).skip((page - 1) * pageSize).limit(pageSize).sort({ today: -1 });
+    return [totalAtt, attendance];
+
+  } catch (error) {
+    console.log("Error :", error);
+    return [null, null];
+  }
 }
 
 function generateRandomFourDigitNumber() {
@@ -481,75 +580,100 @@ async function getProjectBugs(projectId, employee, curr_status, priority, page, 
 async function bugComments(bugId) {
   // const bugId = req.params.bugId;
   const allComments = await Comment.aggregate([
-      {
-          $match: {
-              bugId: bugId
-          }
-      },
-      {
-          $lookup: {
-              from: "employees",
-              localField: "by",
-              foreignField: "email",
-              as: "employee"
-          }
-      }, {
-          $unwind: "$employee"
-      }, {
-          $project: {
-              "bugId": 1,
-              "comment": 1,
-              "employee.firstName": 1,
-              "employee.lastName": 1,
-              "employee.profileImg": 1,
-              "at": 1
-          }
+    {
+      $match: {
+        bugId: bugId
       }
+    },
+    {
+      $lookup: {
+        from: "employees",
+        localField: "by",
+        foreignField: "email",
+        as: "employee"
+      }
+    }, {
+      $unwind: "$employee"
+    }, {
+      $project: {
+        "bugId": 1,
+        "comment": 1,
+        "employee.firstName": 1,
+        "employee.lastName": 1,
+        "employee.profileImg": 1,
+        "at": 1
+      }
+    }
   ]);
   return allComments;
 }
 
 async function getBugHistory(bugId) {
   try {
-      const history = await BugHistory.aggregate([
-          {
-              $match: {
-                  bugId: bugId
-              }
-          }, {
-              $lookup: {
-                  from: "employees",
-                  localField: "by",
-                  foreignField: "email",
-                  as: "employee"
-              }
-          },
-          {
-              $unwind: "$employee"
-          },
-          {
-              $project: {
-                  "bugId": 1,
-                  "by": 1,
-                  "type": 1,
-                  "data": 1,
-                  "emp_f_name": "$employee.firstName",
-                  "emp_l_name": "$employee.lastName",
-                  "emp_profile": "$employee.profileImg",
-                  "time": 1
-              }
-          }
-      ])
-
-      if (history) {
-          return history;
-      } else {
-          return null;
+    const history = await BugHistory.aggregate([
+      {
+        $match: {
+          bugId: bugId
+        }
+      }, {
+        $lookup: {
+          from: "employees",
+          localField: "by",
+          foreignField: "email",
+          as: "employee"
+        }
+      },
+      {
+        $unwind: "$employee"
+      },
+      {
+        $project: {
+          "bugId": 1,
+          "by": 1,
+          "type": 1,
+          "data": 1,
+          "emp_f_name": "$employee.firstName",
+          "emp_l_name": "$employee.lastName",
+          "emp_profile": "$employee.profileImg",
+          "time": 1
+        }
       }
-  } catch (e) {
-      console.log("error :", e);
+    ])
+
+    if (history) {
+      return history;
+    } else {
       return null;
+    }
+  } catch (e) {
+    console.log("error :", e);
+    return null;
   }
+}
+
+function getCurrentDate() {
+  const currentDate = new Date();
+  const isoDate = currentDate.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
+  return isoDate.split('T')[0];
+}
+
+function getCurrentDateAndDayFormatted() {
+  const currentDate = new Date();
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+    timeZone: 'Asia/Kolkata'
+  };
+  const formattedDate = new Intl.DateTimeFormat('en-US', options).format(currentDate);
+  const formattedDateWithoutOrdinal = formattedDate.replace(/(\d{1,2})(th|st|nd|rd)/, '$1');
+  return formattedDateWithoutOrdinal;
+}
+
+function getCurrentDateTime() {
+  const currentDate = new Date();
+  return currentDate.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
 }
 
 
@@ -565,3 +689,6 @@ exports.getStatusCount = getStatusCount;
 exports.getBugs = getBugs;
 exports.bugDetails = bugDetails;
 exports.getHistory = getHistory;
+exports.getEmployeeAttendance = getEmployeeAttendance;
+exports.markLogin = markLogin;
+exports.markLogout = markLogout;

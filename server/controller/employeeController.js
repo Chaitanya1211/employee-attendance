@@ -533,16 +533,6 @@ async function getStatusCount(req, res) {
     }
 }
 
-// async function getHistory(req, res) {
-//     const id = req.params.bugId;
-//     const history = await getBugHistory(id);
-//     if (history) {
-//         res.status(200).json({ message: "History found", history: history })
-//     } else {
-//         res.status(404).json({ message: "History not found", history: history });
-//     }
-// }
-
 async function getEmployeeAttendance(req, res) {
     const email = req.user.email;
     const page = req.query.page;
@@ -559,7 +549,6 @@ async function getEmployeeAttendance(req, res) {
 
 async function getAllAttendance(email, page, pageSize) {
     try {
-        // const result = await Attendance.find({ employeeEmail: email }).sort({ today: -1 });
         const totalItems = await Attendance.countDocuments({employeeEmail:email});
         const result = await Attendance.find({ employeeEmail: email }).skip((page - 1) * pageSize).limit(pageSize).sort({ today: -1 });
         if (result) {
@@ -644,10 +633,8 @@ async function matchFace(email, image) {
 
         if (bestDistance < matchDistance) {
             return true;
-            // res.send({ message: 'Face matched', label: bestMatch.label, distance: bestDistance });
         } else {
             return false;
-            // res.send({ message: 'No match found' });
         }
     } catch (error) {
         console.error(error);
@@ -834,49 +821,6 @@ async function markAsViewed(bugId) {
         return false;
     }
 }
-
-// async function getBugHistory(bugId) {
-//     try {
-//         const history = await BugHistory.aggregate([
-//             {
-//                 $match: {
-//                     bugId: bugId
-//                 }
-//             }, {
-//                 $lookup: {
-//                     from: "employees",
-//                     localField: "by",
-//                     foreignField: "email",
-//                     as: "employee"
-//                 }
-//             },
-//             {
-//                 $unwind: "$employee"
-//             },
-//             {
-//                 $project: {
-//                     "bugId": 1,
-//                     "by": 1,
-//                     "type": 1,
-//                     "data": 1,
-//                     "emp_f_name": "$employee.firstName",
-//                     "emp_l_name": "$employee.lastName",
-//                     "emp_profile": "$employee.profileImg",
-//                     "time": 1
-//                 }
-//             }
-//         ])
-
-//         if (history) {
-//             return history;
-//         } else {
-//             return null;
-//         }
-//     } catch (e) {
-//         console.log("error :", e);
-//         return null;
-//     }
-// }
 
 function getISTDate() {
     const now = new Date();
