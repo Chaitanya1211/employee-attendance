@@ -1,11 +1,15 @@
 const Admin = require("../models/adminModel");
 const Employee = require("../models/employeeModel");
+const Bug = require("../models/bugModel");
 const Attendance = require("../models/attendanceModel");
 const Project = require("../models/projectModel");
+const Comment = require("../models/commentModel");
+const BugHistory = require("../models/bugHistoryModel");
 const bcrypt = require("bcrypt")
 const nodemailer = require("nodemailer");
 const dotenv = require('dotenv');
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose")
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -148,19 +152,163 @@ async function createNewProject(req, res) {
   }
 }
 
-async function getAllProjects(req,res){
-  try{
+async function getAllProjects(req, res) {
+  try {
     const projects = await Project.find({});
-    if(projects){
-      res.status(200).json({message : "Projects found", projects : projects});
-    }else{
+    if (projects) {
+      res.status(200).json({ message: "Projects found", projects: projects });
+    } else {
       res.status(404).json({ message: 'No projects found' });
     }
-  }catch(error){
+  } catch (error) {
     console.error('Internal server error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+async function getProjectDetails(req, res) {
+  // for tester
+  const projectId = req.params.projectId;
+  const castedId = new mongoose.Types.ObjectId(projectId);
+  const projectDetails = await getProject(projectId);
+  const total = await Bug.countDocuments({ projectId: castedId });
+  const closed = await Bug.countDocuments({ $and: [{ current_status: "CLOSED" }, { projectId: castedId }] });
+
+  if (projectDetails) {
+    res.status(200).json({ details: projectDetails, total: total, closed: closed });
+  }
+
+}
+
+async function getStatusCount(req, res) {
+  const projectId = req.params.projectId;
+  const castedId = new mongoose.Types.ObjectId(projectId);
+  var counts = {};
+  try {
+    const total = await Bug.countDocuments({ projectId: castedId });
+    counts["total"] = total;
+    const closed = await Bug.countDocuments({ $and: [{ current_status: "CLOSED" }, { projectId: castedId }] });
+    counts["closed"] = closed;
+    const open = await Bug.countDocuments({ $and: [{ current_status: "OPEN" }, { projectId: castedId }] });
+    counts["open"] = open;
+    const done = await Bug.countDocuments({ $and: [{ current_status: "DONE" }, { projectId: castedId }] });
+    counts["done"] = done;
+    const inprogress = await Bug.countDocuments({ $and: [{ current_status: "INPROGRESS" }, { projectId: castedId }] });
+    counts["inprogress"] = inprogress;
+    const recheck = await Bug.countDocuments({ $and: [{ current_status: "RECHECKING" }, { projectId: castedId }] });
+    counts["rechecking"] = recheck;
+    res.status(200).json({ message: "Details found", count: counts })
+  } catch (error) {
+    console.error('Internal server error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function getBugs(req, res) {
+  const projectId = req.query.projectId;
+  const page = req.query.page;
+  const pageSize = req.query.pageSize;
+  const { employee, priority, curr_status, role } = req.body;
+  console.log("Request bidy :", req.body);
+  const [bugs, totalItems] = await getProjectBugs(projectId, employee, curr_status, priority, page, pageSize, role);
+  if (bugs) {
+    res.status(200).json({ message: "Bugs found", bugs: bugs, page: page, totalPages: Math.ceil(totalItems / pageSize) })
+  } else {
+    res.status(404).json({ message: "Bugs not found" })
+  }
+}
+
+async function bugDetails(req, res) {
+  const tempBugId = req.params.bugId;
+  const bugId = new mongoose.Types.ObjectId(req.params.bugId);
+      try {
+          const bug = await Bug.aggregate([{
+              $match: {
+                  _id: bugId
+              }
+          },
+          {
+              $lookup: {
+                  from: "employees",
+                  localField: "raisedBy",
+                  foreignField: "email",
+                  as: "raising_employee"
+              }
+          },
+          {
+              $unwind: "$raising_employee"
+          },
+          {
+              $lookup: {
+                  from: "employees",
+                  localField: "assignedTo",
+                  foreignField: "email",
+                  as: 'assigned_employee'
+              }
+          }, {
+              $unwind: "$assigned_employee"
+          }, {
+              $lookup: {
+                  from: "employees",
+                  localField: "updated_by",
+                  foreignField: "email",
+                  as: 'updated_employee'
+              }
+          }, {
+              $unwind: {
+                  path: "$updated_employee",
+                  preserveNullAndEmptyArrays: true
+              }
+          }, {
+              $project: {
+                  "title": 1,
+                  "description": 1,
+                  "images": 1,
+                  "raisedByName": "$raising_employee.firstName",
+                  "raisedBylastName": "$raising_employee.lastName",
+                  "raisedByProfile": "$raising_employee.profileImg",
+                  "assignedToName": "$assigned_employee.firstName",
+                  "assignedTolastName": "$assigned_employee.lastName",
+                  "assignedToProfile": "$assigned_employee.profileImg",
+                  "raised_on": 1,
+                  "priority": 1,
+                  "current_status": 1,
+                  "qa_status": 1,
+                  "dev_status": 1,
+                  "updated_by": 1,
+                  "updatedByName": "$updated_employee.firstName",
+                  "updatedByLastName": "$updated_employee.lastName",
+                  "updatedByProfile": "$updated_employee.profileImg",
+                  "updatedAt": 1,
+                  "latest_update": 1
+              }
+          }
+          ]);
+          if (bug.length != 0) {
+              const comments = await bugComments(tempBugId);
+              res.status(200).json({ message: "Bug found", bug: bug, comments: comments })
+          } else {
+              res.status(404).json({ message: "Bug not found" });
+          }
+      } catch (error) {
+          console.error('Internal server error', error);
+          res.status(500).json({ error: 'Internal server error' });
+      }
+
+}
+
+async function getHistory(req, res) {
+  const id = req.params.bugId;
+  const history = await getBugHistory(id);
+  if (history) {
+      res.status(200).json({ message: "History found", history: history })
+  } else {
+      res.status(404).json({ message: "History not found", history: history });
+  }
+}
+
+
+// No route functions
 function emailTemplate(encryptedEmail) {
   return `<div class="row">
   <div class="col-12">
@@ -214,9 +362,196 @@ function emailTemplate(encryptedEmail) {
   </div>
 </div>`;
 }
+
 function generateRandomFourDigitNumber() {
   return Math.floor(1000 + Math.random() * 9000);
 }
+
+async function getProject(projectId) {
+  try {
+    const result = await Project.find({ _id: projectId });
+    if (result) {
+      return result;
+    } else {
+      return result;
+    }
+  } catch (error) {
+    return null;
+  }
+
+}
+
+const buildQuery = (projectId, curr_status, priority, employee, role) => {
+  let query = {
+    projectId: projectId,
+  };
+
+  if (curr_status != '') {
+    query.current_status = curr_status;
+  }
+
+  if (priority != '') {
+    query.priority = priority;
+  }
+
+  if (employee != "") {
+    if (role == "Tester") {
+      query.raisedBy = employee
+    } else {
+      query.assignedTo = employee
+    }
+  }
+
+  return query;
+};
+
+async function getProjectBugs(projectId, employee, curr_status, priority, page, pageSize, role) {
+  const castedpageSize = parseInt(pageSize);
+  const query = buildQuery(projectId, curr_status, priority, employee, role);
+  console.log("Query :", query);
+  try {
+    const totalItems = await Bug.countDocuments({ projectId: projectId });
+    const result = await Bug.aggregate([
+      {
+        $match: query
+      },
+      {
+        $lookup: {
+          from: "employees",
+          localField: "raisedBy",
+          foreignField: "email",
+          as: "raising_employee"
+        }
+      }, {
+        $unwind: "$raising_employee"
+      },
+      {
+        $lookup: {
+          from: "employees",
+          localField: "assignedTo",
+          foreignField: "email",
+          as: 'assigned_employee'
+        }
+      }, {
+        $unwind: "$assigned_employee"
+      }, {
+        $lookup: {
+          from: "employees",
+          localField: "updated_by",
+          foreignField: "email",
+          as: 'updated_employee'
+        }
+      }, {
+        $unwind: {
+          path: "$updated_employee",
+          preserveNullAndEmptyArrays: true
+        }
+      }, {
+        $project: {
+          "title": 1,
+          "description": 1,
+          "raisedByName": "$raising_employee.firstName",
+          "raisedByProfile": "$raising_employee.profileImg",
+          "assignedToName": "$assigned_employee.firstName",
+          "assignedToProfile": "$assigned_employee.profileImg",
+          "raised_on": 1,
+          "priority": 1,
+          "current_status": 1,
+          "isViewed": 1,
+          "updated_by": 1,
+          "updatedByName": "$updated_employee.firstName",
+          "updatedByLastName": "$updated_employee.lastName",
+          "updatedByProfile": "$updated_employee.profileImg",
+          "updatedAt": 1,
+          "latest_update": 1
+        }
+      }
+    ]).skip((page - 1) * pageSize).limit(castedpageSize).sort({ latest_update: -1 });
+    if (result) {
+      return [result, totalItems];
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.log("Error in bugs :", error)
+    return null;
+  }
+}
+
+async function bugComments(bugId) {
+  // const bugId = req.params.bugId;
+  const allComments = await Comment.aggregate([
+      {
+          $match: {
+              bugId: bugId
+          }
+      },
+      {
+          $lookup: {
+              from: "employees",
+              localField: "by",
+              foreignField: "email",
+              as: "employee"
+          }
+      }, {
+          $unwind: "$employee"
+      }, {
+          $project: {
+              "bugId": 1,
+              "comment": 1,
+              "employee.firstName": 1,
+              "employee.lastName": 1,
+              "employee.profileImg": 1,
+              "at": 1
+          }
+      }
+  ]);
+  return allComments;
+}
+
+async function getBugHistory(bugId) {
+  try {
+      const history = await BugHistory.aggregate([
+          {
+              $match: {
+                  bugId: bugId
+              }
+          }, {
+              $lookup: {
+                  from: "employees",
+                  localField: "by",
+                  foreignField: "email",
+                  as: "employee"
+              }
+          },
+          {
+              $unwind: "$employee"
+          },
+          {
+              $project: {
+                  "bugId": 1,
+                  "by": 1,
+                  "type": 1,
+                  "data": 1,
+                  "emp_f_name": "$employee.firstName",
+                  "emp_l_name": "$employee.lastName",
+                  "emp_profile": "$employee.profileImg",
+                  "time": 1
+              }
+          }
+      ])
+
+      if (history) {
+          return history;
+      } else {
+          return null;
+      }
+  } catch (e) {
+      console.log("error :", e);
+      return null;
+  }
+}
+
 
 exports.register = register;
 exports.login = login;
@@ -225,3 +560,8 @@ exports.allEmployees = allEmployees;
 exports.getSingleEmployee = getSingleEmployee;
 exports.createNewProject = createNewProject;
 exports.getAllProjects = getAllProjects;
+exports.getProjectDetails = getProjectDetails;
+exports.getStatusCount = getStatusCount;
+exports.getBugs = getBugs;
+exports.bugDetails = bugDetails;
+exports.getHistory = getHistory;

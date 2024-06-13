@@ -62,7 +62,7 @@ export function AdminProjects() {
                                             </div>
                                             <div class="col-sm-auto">
                                                 <div class="text-sm-end">
-                                                    <a href="http://localhost:5173/admin/newproject" class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Add New Project</a>
+                                                    <a href="http://localhost:5173/admin/newproject" class="btn btn-success btn-rounded" id="addProject-btn"><i class="fa-solid fa-plus"></i> Add New Project</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -104,9 +104,9 @@ export function AdminProjects() {
                                                                     <td>10</td>
                                                                     <td>2</td>
                                                                     <td>1</td>
-                                                                    <td>
-                                                                        <button class="btn btn-primary">View More</button>
-                                                                    </td>
+                                                                    <Link to={`http://localhost:5173/admin/project/${project._id}`}>
+                                                                            <button class="btn btn-primary">View More</button>
+                                                                        </Link>
                                                                 </tr>
 
 

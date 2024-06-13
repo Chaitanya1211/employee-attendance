@@ -22,6 +22,6 @@ router.post('/addComment',auth,employee.addComment);
 router.get('/bug/comments/:bugId',auth,employee.getAllComments);
 router.post('/bug/updateStatus',auth,employee.updateBugStatus);
 router.get('/project/getBugCount/:projectId',auth,employee.getStatusCount);
-router.get('/bug/history/:bugId', auth, employee.getHistory);
+// router.get('/bug/history/:bugId', auth, employee.getHistory);
 // router.post('/filterBugs',auth,employee.getFilteredBugs);
 module.exports = router

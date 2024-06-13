@@ -35,10 +35,10 @@ export function EmployeeSidebar() {
     return (
         <div className="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style={{ height: "100vh" }}>
             <NavLink to="/home" className="mb-3 mb-md-0 text-white text-decoration-none">
-                <p className="fs-4 mb-0">{ details?.firstName +  " " + details?.lastName}</p>
+                <p className="fs-4 mb-0">{details?.firstName + " " + details?.lastName}</p>
                 <p className="mb-1">{details?.role}</p>
             </NavLink>
-            <hr className="mt-2"/>
+            <hr className="mt-2" />
             <ul className="nav nav-pills flex-column mb-auto">
                 <li className="nav-item">
                     <NavLink exact to="/home" className="nav-link text-white" activeClassName="active">

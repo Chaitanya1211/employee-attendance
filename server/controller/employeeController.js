@@ -533,15 +533,15 @@ async function getStatusCount(req, res) {
     }
 }
 
-async function getHistory(req, res) {
-    const id = req.params.bugId;
-    const history = await getBugHistory(id);
-    if (history) {
-        res.status(200).json({ message: "History found", history: history })
-    } else {
-        res.status(404).json({ message: "History not found", history: history });
-    }
-}
+// async function getHistory(req, res) {
+//     const id = req.params.bugId;
+//     const history = await getBugHistory(id);
+//     if (history) {
+//         res.status(200).json({ message: "History found", history: history })
+//     } else {
+//         res.status(404).json({ message: "History not found", history: history });
+//     }
+// }
 
 async function getEmployeeAttendance(req, res) {
     const email = req.user.email;
@@ -835,48 +835,48 @@ async function markAsViewed(bugId) {
     }
 }
 
-async function getBugHistory(bugId) {
-    try {
-        const history = await BugHistory.aggregate([
-            {
-                $match: {
-                    bugId: bugId
-                }
-            }, {
-                $lookup: {
-                    from: "employees",
-                    localField: "by",
-                    foreignField: "email",
-                    as: "employee"
-                }
-            },
-            {
-                $unwind: "$employee"
-            },
-            {
-                $project: {
-                    "bugId": 1,
-                    "by": 1,
-                    "type": 1,
-                    "data": 1,
-                    "emp_f_name": "$employee.firstName",
-                    "emp_l_name": "$employee.lastName",
-                    "emp_profile": "$employee.profileImg",
-                    "time": 1
-                }
-            }
-        ])
+// async function getBugHistory(bugId) {
+//     try {
+//         const history = await BugHistory.aggregate([
+//             {
+//                 $match: {
+//                     bugId: bugId
+//                 }
+//             }, {
+//                 $lookup: {
+//                     from: "employees",
+//                     localField: "by",
+//                     foreignField: "email",
+//                     as: "employee"
+//                 }
+//             },
+//             {
+//                 $unwind: "$employee"
+//             },
+//             {
+//                 $project: {
+//                     "bugId": 1,
+//                     "by": 1,
+//                     "type": 1,
+//                     "data": 1,
+//                     "emp_f_name": "$employee.firstName",
+//                     "emp_l_name": "$employee.lastName",
+//                     "emp_profile": "$employee.profileImg",
+//                     "time": 1
+//                 }
+//             }
+//         ])
 
-        if (history) {
-            return history;
-        } else {
-            return null;
-        }
-    } catch (e) {
-        console.log("error :", e);
-        return null;
-    }
-}
+//         if (history) {
+//             return history;
+//         } else {
+//             return null;
+//         }
+//     } catch (e) {
+//         console.log("error :", e);
+//         return null;
+//     }
+// }
 
 function getISTDate() {
     const now = new Date();
@@ -903,6 +903,6 @@ exports.addComment = addComment;
 exports.getAllComments = getAllComments;
 exports.updateBugStatus = updateBugStatus;
 exports.getStatusCount = getStatusCount;
-exports.getHistory = getHistory;
+// exports.getHistory = getHistory;
 exports.getEmployeeAttendance = getEmployeeAttendance;
 exports.getBugs = getBugs;
