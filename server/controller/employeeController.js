@@ -313,8 +313,9 @@ async function getBugs(req,res){
     const projectId = req.query.projectId;
     const page = req.query.page;
     const pageSize = req.query.pageSize;
-    const {type, priority, curr_status} = req.body;
-    const [bugs,totalItems] = await getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize);
+    const {type, priority, curr_status, role} = req.body;
+    console.log("Request bidy :", req.body);
+    const [bugs,totalItems] = await getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize, role);
     if(bugs){
         res.status(200).json({message:"Bugs found", bugs:bugs, page:page,totalPages: Math.ceil(totalItems / pageSize)})
     }else{
@@ -722,7 +723,7 @@ async function getProject(projectId) {
 
 }
 
-const buildQuery = (projectId, curr_status, priority, type, email) => {
+const buildQuery = (projectId, curr_status, priority, type, email, role) => {
     let query = {
       projectId: projectId,
     };
@@ -736,15 +737,19 @@ const buildQuery = (projectId, curr_status, priority, type, email) => {
     }
   
     if (type === "self") {
-      query.assignedTo = email;
+        if(role==="Tester"){
+            query.raisedBy = email
+        }else{
+            query.assignedTo = email;
+        }
     }
   
     return query;
 };
 
-async function getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize) {
+async function getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize, role) {
     const castedpageSize = parseInt(pageSize);
-    const query = buildQuery(projectId, curr_status, priority, type, email);
+    const query = buildQuery(projectId, curr_status, priority, type, email, role);
     console.log("Query :", query);
     try {
         // const result = await Bug.find({ projectId: projectId });

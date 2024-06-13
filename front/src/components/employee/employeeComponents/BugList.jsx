@@ -6,7 +6,7 @@ import defaultImage from "../../../assets/defaultImage.jpg";
 import { Link } from 'react-router-dom';
 import axios from "axios";
 
-export function BugList({showBug, projectId, token, project}) {
+export function BugList({showBug, projectId, token, project, role}) {
     // pagination in bugs
     const [bugs, setBugs] = useState([]);
     const [page, setPage] = useState(1);
@@ -49,7 +49,8 @@ export function BugList({showBug, projectId, token, project}) {
         const filterData = {
             "type": type,
             "priority": priority,
-            "curr_status": status
+            "curr_status": status,
+            "role": role
         }
         axios({
             url: `http://localhost:8080/employee/project/bug?projectId=${projectId}&page=${page}&pageSize=${pageSize}`,
@@ -91,7 +92,7 @@ export function BugList({showBug, projectId, token, project}) {
                         <div className="col-lg-3">
                             <label htmlFor="priority">Priority</label>
                             <select class="form-select" id="priority" value={priority} onChange={handleChange}>
-                                <option value="">Priority</option>
+                                <option value="">All</option>
                                 <option value="HIGH">High</option>
                                 <option value="MEDIUM">Medium</option>
                                 <option value="LOW">Low</option>
@@ -100,7 +101,7 @@ export function BugList({showBug, projectId, token, project}) {
                         <div className="col-lg-3">
                             <label htmlFor="curr_status">Status</label>
                             <select class="form-select" id="curr_status" value={status} onChange={handleChange}>
-                                <option value="">Status</option>
+                                <option value="">All</option>
                                 <option value="OPEN">Open</option>
                                 <option value="RECHECKING">Rechecking</option>
                                 <option value="CLOSED">Closed</option>

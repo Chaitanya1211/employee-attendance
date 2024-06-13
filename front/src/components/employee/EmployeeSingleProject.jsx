@@ -11,7 +11,7 @@ export function SingleProject() {
     const [showBug, setShowBug] = useState(false);
     const [project, setProject] = useState([]);
     const [countData, setCountData] = useState([]);
-
+    const [role, setRole] = useState("");
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/project/${projectId}`,
@@ -22,7 +22,8 @@ export function SingleProject() {
         }).then((response) => {
             setProject(response.data.details[0]);
             console.log(response.data);
-            console.log("Role :", response.data.role)
+            setRole(response.data.role);
+            console.log("Role :",role)
             if (response.data.role == "Tester") {
                 setShowBug(true);
             }
@@ -140,7 +141,7 @@ export function SingleProject() {
                             </div>
                         </div>
                         {/* Show all bugs */}
-                        <BugList showBug={showBug} projectId={projectId} token={token} project={project}/>
+                        <BugList showBug={showBug} projectId={projectId} token={token} project={project} role={role}/>
                     </div>
                 </div>
             </div>
