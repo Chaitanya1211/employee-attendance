@@ -117,7 +117,7 @@ export function Attendance({email}) {
         <>
             <div className="row">
                 <div className="col-lg-12">
-                    <div className="card">
+                    <div className="card mb-0">
                         <div className="row mb-2">
                             <div className="table-responsive">
                                 <table className="table align-middle table-nowrap table-hover dt-responsive nowrap w-100" id="userList-table">

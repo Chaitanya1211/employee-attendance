@@ -6,16 +6,18 @@ export function BugCounts({projectId, token}) {
     const [countData, setCountData] = useState([]);
     useEffect(() => {
         axios({
-            url: `http://localhost:8080/admin/getBugCount/${projectId}`,
+            url: `http://localhost:8080/admin/project/getBugCount/${projectId}`,
             method: "GET",
             headers: {
                 "token": token
             }
         }).then((response) => {
             if(response.status === 200){
+                console.log("Count data :", response.data);
                 setCountData(response.data.count)
             }
         }).catch((error) => {
+            console.log("Here error");
             console.log("Error :", error)
         })
     }, [])

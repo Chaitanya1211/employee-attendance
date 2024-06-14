@@ -3,14 +3,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { AdminSidebar } from './AdminSidebar';
 import { BackBtn } from '../../helper/backButton';
-import { BugCounts } from '../employee/employeeComponents/bugCount';
+import { BugCounts } from '../admin/adminComponents/bugCount';
 import { BugList } from './adminComponents/BugList';
-
+import noProject from '../../assets/no-project.png';
 export function AdminSingleProject() {
     const { projectId } = useParams();
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [project, setProject] = useState([]);
-    const [countData, setCountData] = useState([]);
     const [total, setTotal] = useState(0);
     const [closed, setClosed] = useState(0);
     // Project details
@@ -31,7 +30,6 @@ export function AdminSingleProject() {
         })
     }, [])
 
-    console.log("Project id:", projectId);
     return (
         <>
             <div className="d-flex">
@@ -64,7 +62,7 @@ export function AdminSingleProject() {
                                     <div class="card-body">
                                         <div class="d-flex">
                                             <div class="flex-shrink-0 me-4">
-                                                <img src={project.projectImage ?? ""} alt="" class="avatar-sm" />
+                                                <img src={project.projectImage ?? noProject} alt="" class="avatar-sm img-fluid" />
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
                                                 <h5 class="text-truncate font-size-15">{project.projectTitle}</h5>

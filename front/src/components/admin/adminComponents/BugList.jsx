@@ -5,7 +5,8 @@ import { toISTLocaleString } from "../../../helper/dates";
 import defaultImage from "../../../assets/defaultImage.jpg";
 import { Link } from 'react-router-dom';
 import axios from "axios";
-
+import noProfile from '../../../assets/no-profile.png';
+import noProject from '../../../assets/no-project.png';
 export function BugList({ projectId, token, project }) {
     // pagination in bugs
     const [bugs, setBugs] = useState([]);
@@ -29,9 +30,7 @@ export function BugList({ projectId, token, project }) {
         const value = event.target.value;
         if (id === "type") {
             const selectedOption = event.target.options[event.target.selectedIndex];
-            // const email = selectedOption.value;
             setEmail(selectedOption.value);
-            // const role = selectedOption.getAttribute('data-role');
             setRole(selectedOption.getAttribute('data-role'));
         } else if (id === "priority") {
             setPriority(value)
@@ -117,10 +116,6 @@ export function BugList({ projectId, token, project }) {
                     <div className="row g-3 my-1">
                         <div className="col-lg-3">
                             <label htmlFor="type">Assigned To</label>
-                            {/* <select class="form-select" value={type} id="type" onChange={handleChange}>
-                                <option value="all" selected>All</option>
-                                <option value="self">Assigned to me</option>
-                            </select> */}
                             <select class="form-select" value={email} id="type" onChange={handleChange}>
                                 <option value="">Select Employee</option>
                                 {employees.map((employee) => (
@@ -186,7 +181,7 @@ export function BugList({ projectId, token, project }) {
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-sm bg-light rounded p-2">
-                                                    <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                    <img src={project.projectImage ?? noProject} alt="Project Icon" class="img-fluid rounded-circle" />
                                                 </div>
                                                 <div class="ps-3">
                                                     <h5 class="text-truncate font-size-14">
@@ -204,7 +199,7 @@ export function BugList({ projectId, token, project }) {
                                         <td>{bug.updated_by != null ? <>
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-sm bg-light rounded p-2">
-                                                    <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                    <img src={bug.updatedByProfile ?? noProfile} alt="Project Icon" class="img-fluid rounded-circle" />
                                                 </div>
                                                 <div class="ps-3">
                                                     <h5 class="text-truncate font-size-12 m-0">

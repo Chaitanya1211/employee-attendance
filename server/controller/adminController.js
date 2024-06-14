@@ -55,7 +55,7 @@ async function login(req, res) {
           id: admin._id,
           email: admin.email
         }
-        const token = jwt.sign(payload, process.env.SECRET_KEY);
+        const token = jwt.sign(payload, process.env.ADMIN_SECRET_KEY);
         console.log("Login success");
         res.status(200).json({ message: "success", token: token })
       } else {
@@ -430,26 +430,6 @@ function emailTemplate(encryptedEmail) {
 </div>`;
 }
 
-// async function makeAttendanceDoc(email) {
-//   const current = getCurrentDate();
-//   let todayStatus = await Attendance.findOne({ $and: [{ employeeEmail: email }, { today: current }] });
-//   if (!todayStatus) {
-//     const currentDate = getCurrentDate();
-//     const showDate = getCurrentDateAndDayFormatted();
-//     const newToday = new Attendance({
-//       employeeEmail: email,
-//       showDate: showDate,
-//       today: currentDate,
-//       isLoggedIn: false,
-//       isLoggedOut: false
-//     });
-//     todayStatus = await newToday.save();
-//     return true;
-
-//   }else{
-//     return false;
-//   }
-// }
 async function employeeAttendance(email, page, pageSize) {
   try {
     const totalAtt = await Attendance.countDocuments({ employeeEmail: email });
@@ -651,6 +631,59 @@ async function getBugHistory(bugId) {
   }
 }
 
+async function allProjectWithBugs(req,res){
+  try {
+    const bugCounts = await Bug.aggregate([
+      {
+        $group: {
+          _id: {
+            projectId: '$projectId',
+            current_status: '$current_status',
+          },
+          count: { $sum: 1 },
+        },
+      },   
+      {
+        $group: {
+          _id: '$_id.projectId',
+          counts: {
+            $push: {
+              status: '$_id.current_status',
+              count: '$count',
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'projects',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'project',
+        },
+      }, {
+        $unwind: {
+          path: "$project",
+          preserveNullAndEmptyArrays: true
+        }
+      }
+      ,{
+        $project: {
+          _id: 1,
+          "projectId": '$_id',
+          "projectName": '$project.projectName',
+          "desc":'$project.projectDesc',
+          counts: 1,
+        },
+      }
+    ]);
+
+    res.json(bugCounts);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
 function getCurrentDate() {
   const currentDate = new Date();
   const isoDate = currentDate.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
@@ -692,3 +725,4 @@ exports.getHistory = getHistory;
 exports.getEmployeeAttendance = getEmployeeAttendance;
 exports.markLogin = markLogin;
 exports.markLogout = markLogout;
+exports.allProjectWithBugs = allProjectWithBugs;
