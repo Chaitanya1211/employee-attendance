@@ -8,6 +8,7 @@ import GreetingMessage from "./employeeComponents/EmployeeGreeting";
 import SingleCapture from "./employeeComponents/SingleCapture";
 import { Loader } from "../../helper/loader";
 import noProfile from "../../assets/no-profile.png";
+import SampleLine from "./employeeComponents/workingHoursChart";
 export function EmployeeHome() {
     const [loginModal, setLoginModal] = useState(false);
     const [logoutModal, setLogoutModal] = useState(false);
@@ -207,6 +208,11 @@ export function EmployeeHome() {
                             </div>
                         </div>
                         <AttendanceList render={reRender} />
+                        {/* <div className="row">
+                            <div className="col-lg-12">
+                                <SampleLine />
+                            </div>
+                        </div> */}
 
                     </div>
                 </div>
