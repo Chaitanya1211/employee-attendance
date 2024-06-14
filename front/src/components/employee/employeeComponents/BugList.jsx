@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { TableLoader } from "./TableLoader";
 import { Priority, Status } from "../../../helper/priority";
 import { toISTLocaleString } from "../../../helper/dates";
-import defaultImage from "../../../assets/defaultImage.jpg";
 import { Link } from 'react-router-dom';
 import axios from "axios";
-
+import noProfile from '../../../assets/no-profile.png';
+import noProject from '../../../assets/no-project.png';
 export function BugList({showBug, projectId, token, project, role}) {
     // pagination in bugs
     const [bugs, setBugs] = useState([]);
@@ -155,7 +155,7 @@ export function BugList({showBug, projectId, token, project, role}) {
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-sm bg-light rounded p-2">
-                                                    <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                    <img src={project.projectImage ?? noProject} alt="Project Icon" class="img-fluid rounded-circle" />
                                                 </div>
                                                 <div class="ps-3">
                                                     <h5 class="text-truncate font-size-14">
@@ -173,7 +173,7 @@ export function BugList({showBug, projectId, token, project, role}) {
                                         <td>{bug.updated_by != null ? <>
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-sm bg-light rounded p-2">
-                                                    <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
+                                                    <img src={bug.updatedByProfile ?? noProfile} alt="Project Icon" class="img-fluid rounded-circle" />
                                                 </div>
                                                 <div class="ps-3">
                                                     <h5 class="text-truncate font-size-12 m-0">
@@ -189,10 +189,10 @@ export function BugList({showBug, projectId, token, project, role}) {
                                         <td>
                                             <div class="avatar-group">
                                                 <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>
-                                                    <img src={bug.assignedToProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
+                                                    <img src={bug.assignedToProfile ?? noProfile} alt="" class="rounded-circle avatar-xs" />
                                                 </a>
                                                 <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.raisedByName}>
-                                                    <img src={bug.raisedByProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
+                                                    <img src={bug.raisedByProfile ?? noProfile} alt="" class="rounded-circle avatar-xs" />
                                                 </a>
                                             </div>
                                         </td>

@@ -7,7 +7,7 @@ import { AttendanceList } from "./employeeComponents/AttendanceList";
 import GreetingMessage from "./employeeComponents/EmployeeGreeting";
 import SingleCapture from "./employeeComponents/SingleCapture";
 import { Loader } from "../../helper/loader";
-// import noProfile from "../../assets/no-profile.png";
+import noProfile from "../../assets/no-profile.png";
 export function EmployeeHome() {
     const [loginModal, setLoginModal] = useState(false);
     const [logoutModal, setLogoutModal] = useState(false);
@@ -157,7 +157,7 @@ export function EmployeeHome() {
                 <div class="card">
                     <div class="card-body">
                         <div class="text-center">
-                            <img src={profile.profileImg ?? "../../assets/no-profile.png"} alt="Profile.png" height="150" class="mx-auto d-block rounded-circle" />
+                            <img src={profile.profileImg ?? noProfile} alt="Profile.png" height="150" class="mx-auto d-block rounded-circle" />
                             <h5 class="mt-3 mb-1">{profile.firstName + " "}
                                 {profile.middleName && profile.middleName + " "}
                                 {profile.lastName}</h5>

@@ -61,7 +61,7 @@ export function EmployeeSidebar() {
                 </li>
             </ul>
             <hr />
-            <div onClick={logout} className="px-2">
+            <div onClick={logout} className="px-2" role="button">
                 <i class="fa-solid fa-right-from-bracket me-2"></i>
                 <span>Logout</span>
             </div>

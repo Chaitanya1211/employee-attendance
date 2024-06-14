@@ -6,6 +6,7 @@ import profileSchema from "../../helper/profileValidator";
 import { yupResolver } from '@hookform/resolvers/yup';
 import SweetAlert from 'react-bootstrap-sweetalert';
 import { Loader } from "../../helper/loader";
+import noProfile from '../../assets/no-profile.png';
 export function EmployeeProfile() {
     const [employee, setEmployee] = useState([]);
     const { register, handleSubmit, formState: { errors }, setValue } = useForm({
@@ -150,7 +151,7 @@ export function EmployeeProfile() {
                                             <div className="image-parent">
                                                 {/* {imageLoader && <p>Loading...</p>} */}
                                                 <img className="rounded-circle mt-5" width="150px"
-                                                    src={employee.profileImg ?? '../../assets/no-profile.png'}
+                                                    src={employee.profileImg ?? noProfile}
                                                     onLoad={handleLoad}
                                                     alt="Profile I"
                                                 />

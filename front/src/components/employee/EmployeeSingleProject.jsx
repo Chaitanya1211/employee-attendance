@@ -5,6 +5,8 @@ import axios from "axios";
 import { BugCounts } from "./employeeComponents/bugCount";
 import { BackBtn } from "../../helper/backButton";
 import { BugList } from "./employeeComponents/BugList";
+import noProject from '../../assets/no-project.png';
+import open from '../../assets/svg/open-bug.svg';
 export function SingleProject() {
     const { projectId } = useParams();
     const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -81,7 +83,7 @@ export function SingleProject() {
                                     <div class="card-body">
                                         <div class="d-flex">
                                             <div class="flex-shrink-0 me-4">
-                                                <img src={project.projectImage ?? ""} alt="" class="avatar-sm" />
+                                                <img src={project.projectImage ?? noProject} alt="" class="avatar-sm" />
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
                                                 <h5 class="text-truncate font-size-15">{project.projectTitle}</h5>
@@ -103,7 +105,7 @@ export function SingleProject() {
                                                             <div class="flex-shrink-0 align-self-center">
                                                                 <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                                                     <span class="avatar-title rounded-circle bg-primary">
-                                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                                    <i class="fa-solid fa-bug font-size-24"></i>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -123,7 +125,7 @@ export function SingleProject() {
                                                             <div class="flex-shrink-0 align-self-center">
                                                                 <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                                                     <span class="avatar-title rounded-circle bg-primary">
-                                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                                    <i class="fa-solid fa-bug-slash font-size-24"></i>
                                                                     </span>
                                                                 </div>
                                                             </div>

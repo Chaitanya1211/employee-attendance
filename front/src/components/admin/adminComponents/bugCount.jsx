@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-export function BugCounts({projectId, token}) {
+export function BugCounts({ projectId, token }) {
 
     const [countData, setCountData] = useState([]);
     useEffect(() => {
@@ -12,7 +12,7 @@ export function BugCounts({projectId, token}) {
                 "token": token
             }
         }).then((response) => {
-            if(response.status === 200){
+            if (response.status === 200) {
                 console.log("Count data :", response.data);
                 setCountData(response.data.count)
             }
@@ -36,7 +36,7 @@ export function BugCounts({projectId, token}) {
                                 <div class="flex-shrink-0 align-self-center">
                                     <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                         <span class="avatar-title rounded-circle bg-primary">
-                                            <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                            <i class="fa-solid fa-bug font-size-24"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -55,7 +55,7 @@ export function BugCounts({projectId, token}) {
                                 <div class="flex-shrink-0 align-self-center">
                                     <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                         <span class="avatar-title rounded-circle bg-primary">
-                                            <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                            <i class="fa-solid fa-code font-size-24"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -75,7 +75,7 @@ export function BugCounts({projectId, token}) {
                                 <div class="flex-shrink-0 align-self-center">
                                     <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                         <span class="avatar-title rounded-circle bg-primary">
-                                            <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                            <i class="fa-solid fa-hourglass font-size-24"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -95,7 +95,7 @@ export function BugCounts({projectId, token}) {
                                 <div class="flex-shrink-0 align-self-center">
                                     <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                         <span class="avatar-title rounded-circle bg-primary">
-                                            <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                            <i class="fa-solid fa-list-check font-size-24"></i>
                                         </span>
                                     </div>
                                 </div>
