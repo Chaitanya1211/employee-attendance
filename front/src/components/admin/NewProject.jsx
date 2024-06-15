@@ -5,8 +5,9 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import projectSchema from "../../helper/projectValidator";
 import { useState, useRef } from "react";
 import SweetAlert from 'react-bootstrap-sweetalert';
-
+import noProject from '../../assets/no-project.png';
 import axios from "axios";
+import { BackBtn } from "../../helper/backButton";
 export function NewProject() {
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const { register, handleSubmit, formState: { errors }, setValue } = useForm({
@@ -15,15 +16,22 @@ export function NewProject() {
     const [projectSuccess, setProjectSuccess] = useState(false);
     const [createDisable, setcreateDisable] = useState(false);
     const [showErrorAlert, setShowErrorAlert] = useState(false);
-
-    const hideAlert = () =>{
+    const [defaultProjectImg, setDefaultProjectImg] = useState(noProject);
+    const hideAlert = () => {
         setShowErrorAlert(false);
     }
-    const closeSuccessAlert = () =>{
-        setProjectSuccess(false);
-    }
+
     const onSubmitForm = (data) => {
-        console.log(data);
+        console.log("Data :", data);
+        const formData = new FormData();
+        formData.append('projectName', data.projectName);
+        formData.append('projectDesc', data.projectDesc);
+        if (data.projectImage != null) {
+            formData.append('projectImage', data.projectImage);
+        }
+        for (var pair of formData.entries()) {
+            console.log(pair[0]+ ', ' + pair[1]); 
+        }
         setcreateDisable(true);
         axios({
             url: "http://localhost:8080/admin/createProject",
@@ -32,45 +40,48 @@ export function NewProject() {
                 "Content-Type": "multipart/form-data",
                 "token": token
             },
-            data: data
+            data: formData
         }).then((response) => {
             console.log("Response :", response);
             if (response.status === 201) {
                 setProjectSuccess(true);
                 setcreateDisable(false);
-                console.log("Added")
             }
         }).catch((error) => {
             console.error("Error", error);
             if (error.response && error.response.status === 500) {
-                console.log("internal servee error");
                 setShowErrorAlert(true);
             }
         })
     }
     const handleFileChange = (event) => {
         const file = event.target.files[0];
-        setValue('projectImage', file);
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setDefaultProjectImg(reader.result);
+            };
+            reader.readAsDataURL(file);
+            setValue('projectImage', file);
+          }
     }
     const onError = (errors) => {
         console.log(errors);
     }
+
+    const onConfirm = () =>{
+        window.location.replace("http://localhost:5173/admin/projects")
+    }
     return (
         <>
-            {projectSuccess &&
-                <div class="position-fixed top-0 end-0 p-3" style={{ "zIndex": "1005" }}>
-                    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" style={{ "display": "block" }}>
-                        <div class="toast-header">
-                            <img src="assets/images/logo.svg" alt="" class="me-2" height="18" />
-                            <strong class="me-auto">Attendance</strong>
-                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close" onClick={closeSuccessAlert}></button>
-                        </div>
-                        <div class="toast-body">
-                            Project Added successfully
-                        </div>
-                    </div>
-                </div>
-            }
+            <SweetAlert
+                success
+                title="Project Created"
+                show={projectSuccess}
+                onConfirm={onConfirm}
+            >
+                Project Created Successfully
+            </SweetAlert>
 
             <SweetAlert
                 danger
@@ -90,7 +101,10 @@ export function NewProject() {
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-flex align-items-center justify-content-between">
-                                    <h4 class="mb-0 font-size-18">New Project</h4>
+                                <div className="d-flex align-items-center">
+                                        <BackBtn />
+                                        <h4 class="mb-0 font-size-18">New Project</h4>
+                                    </div>
 
                                     <div class="page-title-right">
                                         <ol class="breadcrumb m-0">
@@ -122,7 +136,7 @@ export function NewProject() {
                                                     <label for="project-image-input" class="mb-0" data-bs-toggle="tooltip" data-bs-placement="right" title="Select Image">
                                                         <div class="avatar-xs">
                                                             <div class="avatar-title bg-light border rounded-circle text-muted cursor-pointer shadow font-size-16">
-                                                                <i class='bx bxs-image-alt'></i>
+                                                                <i class="fa-solid fa-pen"></i>
                                                             </div>
                                                         </div>
                                                     </label>
@@ -130,7 +144,7 @@ export function NewProject() {
                                                 </div>
                                                 <div class="avatar-lg">
                                                     <div class="avatar-title bg-light rounded-circle">
-                                                        <img src="" id="projectlogo-img" class="avatar-md h-auto rounded-circle" />
+                                                        <img src={defaultProjectImg} id="projectlogo-img" class="avatar-md h-auto rounded-circle" />
                                                     </div>
                                                 </div>
                                             </div>

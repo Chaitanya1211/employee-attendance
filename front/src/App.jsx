@@ -16,6 +16,8 @@ import { EmployeeProjects } from './components/employee/EmployeeProjects';
 import { SingleProject } from './components/employee/EmployeeSingleProject';
 import { RaiseBug } from './components/employee/RaiseBug';
 import { BugAction } from './components/employee/BugAction';
+import { AdminSingleProject } from './components/admin/AdminSingleProject';
+import { SingleBugDetails } from './components/admin/SingleBugDetails';
 
 function App() {
 
@@ -34,12 +36,13 @@ function App() {
         {/* Admin Routes */}
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path='/admin/home' element={<AdminHome />} />
-        <Route path='/admin/dashboard' element={<AdminEmployee />} />
+        <Route path='/admin/employees' element={<AdminEmployee />} />
         <Route path='/register/:inviteData' element={<EmployeeRegister />} />
         <Route path='/admin/employee/:email' element={<EmployeeDetails />} />
         <Route path='/admin/projects' element={<AdminProjects />} />
         <Route path='/admin/newproject' element={<NewProject />} />
-         
+        <Route path='/admin/project/:projectId' element={<AdminSingleProject/>} />
+        <Route path='/admin/bug/:bugId' element={<SingleBugDetails/>} />
       </Routes>
     </BrowserRouter>
     </>

@@ -9,7 +9,7 @@ const attendanceSchema = mongoose.Schema({
         type :String
     },
     today:{
-        type :String,
+        type :Date,
         required : true
     },
     login:{

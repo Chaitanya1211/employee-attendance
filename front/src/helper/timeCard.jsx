@@ -30,7 +30,6 @@ export function TimeCard() {
                 <div className="card-body">
                     <div className="d-flex">
                         <div className="col-lg-10">
-                            {/* <h6 className="mb-1">Current time</h6> */}
                             <small>Current time</small>
                             <h5 className="mb-0">{dateTime}</h5>
                         </div>

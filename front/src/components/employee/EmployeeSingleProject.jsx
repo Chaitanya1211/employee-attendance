@@ -2,26 +2,18 @@ import { useEffect, useState } from "react";
 import { EmployeeSidebar } from "./EmployeeSidebar";
 import { Link, useParams } from 'react-router-dom';
 import axios from "axios";
-import { Priority, Status } from "../../helper/priority";
-import { toISTLocaleString } from "../../helper/dates";
-import defaultImage from "../../assets/defaultImage.jpg";
 import { BugCounts } from "./employeeComponents/bugCount";
+import { BackBtn } from "../../helper/backButton";
+import { BugList } from "./employeeComponents/BugList";
+import noProject from '../../assets/no-project.png';
+import open from '../../assets/svg/open-bug.svg';
 export function SingleProject() {
     const { projectId } = useParams();
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [showBug, setShowBug] = useState(false);
     const [project, setProject] = useState([]);
     const [countData, setCountData] = useState([]);
-    const [bugs, setBugs] = useState([]);
-
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
-
-    const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = bugs.slice(indexOfFirstItem, indexOfLastItem);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
+    const [role, setRole] = useState("");
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/project/${projectId}`,
@@ -31,9 +23,9 @@ export function SingleProject() {
             }
         }).then((response) => {
             setProject(response.data.details[0]);
-            setBugs(response.data.bugs)
             console.log(response.data);
-            console.log("Role :", response.data.role)
+            setRole(response.data.role);
+            console.log("Role :",role)
             if (response.data.role == "Tester") {
                 setShowBug(true);
             }
@@ -42,6 +34,7 @@ export function SingleProject() {
         })
     }, [])
 
+    // bug count api
     useEffect(() => {
         axios({
             url: `http://localhost:8080/employee/project/getBugCount/${projectId}`,
@@ -69,8 +62,10 @@ export function SingleProject() {
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-flex align-items-center justify-content-between">
-                                <i class="ri-arrow-left-s-line"></i>
-                                    <h4 class="mb-0 font-size-18">Project overview</h4>
+                                    <div className="d-flex align-items-center">
+                                        <BackBtn />
+                                        <h4 class="mb-0 font-size-18">Project overview</h4>
+                                    </div>
 
                                     <div class="page-title-right">
                                         <ol class="breadcrumb m-0">
@@ -88,10 +83,10 @@ export function SingleProject() {
                                     <div class="card-body">
                                         <div class="d-flex">
                                             <div class="flex-shrink-0 me-4">
-                                                <img src={project.projectImage ?? ""} alt="" class="avatar-sm" />
+                                                <img src={project.projectImage ?? noProject} alt="" class="avatar-sm" />
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15">{project.projectTitle}</h5>
+                                                <h5 class="text-truncate font-size-15">{project.projectName}</h5>
                                                 <p class="text-muted ">{project.projectDesc ?? ""}</p>
                                             </div>
                                         </div>
@@ -110,7 +105,7 @@ export function SingleProject() {
                                                             <div class="flex-shrink-0 align-self-center">
                                                                 <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                                                     <span class="avatar-title rounded-circle bg-primary">
-                                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                                    <i class="fa-solid fa-bug font-size-24"></i>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -130,7 +125,7 @@ export function SingleProject() {
                                                             <div class="flex-shrink-0 align-self-center">
                                                                 <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                                                     <span class="avatar-title rounded-circle bg-primary">
-                                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                                    <i class="fa-solid fa-bug-slash font-size-24"></i>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -147,114 +142,8 @@ export function SingleProject() {
                                 <BugCounts projectId={projectId} token={token} ></BugCounts>
                             </div>
                         </div>
-                        {/* Bugs grid */}
-                        <div class="row mb-3">
-                            <div class="col-sm">
-                                <div class="search-box me-2 d-inline-block">
-                                    <div class="position-relative">
-                                        <h4 class="mb-0 font-size-18">Bug List</h4>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* If role==developer then not show button */}
-
-                            {showBug &&
-                                <div class="col-sm-auto">
-                                    <div class="text-sm-end">
-                                        <a href={`http://localhost:5173/raiseBug/${project._id}`} class="btn btn-success btn-rounded" id="addProject-btn"><i class="fa-solid fa-bug me-2"></i> Raise Bug</a>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-
                         {/* Show all bugs */}
-                        <div class="table-responsive">
-                            <table class="table project-list-table align-middle table-nowrap dt-responsive nowrap w-100 table-borderless" id="projectList-table">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th scope="col" style={{ "width": "60px" }}>#</th>
-                                        <th scope="col">Bug</th>
-                                        <th scope="col">Raised On</th>
-                                        <th scope="col">Latest Update</th>
-                                        <th scope="col">Status</th>
-                                        <th scope="col">Priority</th>
-                                        <th scope="col">Team</th>
-                                        <th scope="col">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {currentItems.map((bug, index) => {
-                                        return (
-                                            <tr>
-                                                <td>
-                                                    <div>{index + 1}</div>
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm bg-light rounded p-2">
-                                                            <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
-                                                        </div>
-                                                        <div class="ps-3">
-                                                            <h5 class="text-truncate font-size-14">
-                                                                <a href="javascript: void(0);" class="text-dark">{bug.title ?? ""}</a>
-                                                            </h5>
-                                                            <p class="text-muted mb-0 text-truncate" style={{ "width": "250px" }}>{bug.description ?? " "}</p>
-                                                        </div>
-                                                        {!bug.isViewed && <>
-                                                            <span className="badge bg-danger" style={{ "marginLeft": "auto", "alignSelf": "start" }}>New</span>
-                                                        </>
-                                                        }
-                                                    </div>
-                                                </td>
-                                                <td>{toISTLocaleString(bug.raised_on)}</td>
-                                                <td>{bug.updated_by != null ? <>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm bg-light rounded p-2">
-                                                            <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle" />
-                                                        </div>
-                                                        <div class="ps-3">
-                                                            <h5 class="text-truncate font-size-12 m-0">
-                                                                <a href="javascript: v  oid(0);" class="text-dark">{bug.updatedByName + " " + bug.updatedByLastName}</a>
-                                                            </h5>
-                                                            <p class="text-muted mb-0">{Status(bug.current_status)}</p>
-                                                            <small class="text-muted mb-0">{toISTLocaleString(bug.latest_update)}</small>
-                                                        </div>
-                                                    </div>
-                                                </> : "N/A"}</td>
-                                                <td>{Status(bug.current_status)}</td>
-                                                <td>{Priority(bug.priority)}</td>
-                                                <td>
-                                                    <div class="avatar-group">
-                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.assignedToName}>
-                                                            <img src={bug.assignedToProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title={bug.raisedByName}>
-                                                            <img src={bug.raisedByProfile ?? defaultImage} alt="" class="rounded-circle avatar-xs" />
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                                <td><ul class="list-unstyled hstack gap-1 mb-0">
-                                                    <Link to={`/bug/${bug._id}`} >
-                                                        <li data-bs-toggle="tooltip" data-bs-placement="top" title="View">
-                                                            <span class="btn btn-sm btn-soft-primary"><i class="fa-solid fa-pen"></i></span>
-                                                        </li>
-                                                    </Link>
-                                                </ul></td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                            <div>
-                                <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
-                                    Previous
-                                </button>
-                                <button onClick={() => paginate(currentPage + 1)} disabled={indexOfLastItem >= bugs.length}>
-                                    Next
-                                </button>
-                            </div>
-                        </div>
+                        <BugList showBug={showBug} projectId={projectId} token={token} project={project} role={role}/>
                     </div>
                 </div>
             </div>

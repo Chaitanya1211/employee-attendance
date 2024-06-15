@@ -1,27 +1,7 @@
-import { useEffect, useState } from "react";
 import { AdminSidebar } from "./AdminSidebar";
-import { Link } from 'react-router-dom';
-import axios from "axios";
+import { ProjectGrid } from "./adminComponents/projectGrid";
 
 export function AdminProjects() {
-    const [token, getToken] = useState(localStorage.getItem('token') || '');
-    const [projects, setProjects] = useState([]);
-    useEffect(() => {
-        axios({
-            url: "http://localhost:8080/admin/projects",
-            method: "GET",
-            headers: {
-                "token": token
-            }
-        }).then((response) => {
-            console.log("Response :", response);
-            if (response.status === 200) {
-                setProjects(response.data?.projects)
-            }
-        }).catch((error) => {
-            console.log("Error :", error)
-        })
-    }, [])
     return (
         <>
             <div className="d-flex">
@@ -51,71 +31,14 @@ export function AdminProjects() {
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="row mb-2">
-                                            <div class="col-sm">
-                                                <div class="search-box me-2 d-inline-block">
-                                                    <div class="position-relative">
-                                                        <input type="text" class="form-control" autocomplete="off" id="searchTableList" placeholder="Search..." />
-                                                        <i class="bx bx-search-alt search-icon"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div class="row mb-2  justify-content-end">
                                             <div class="col-sm-auto">
                                                 <div class="text-sm-end">
-                                                    <a href="http://localhost:5173/admin/newproject" class="btn btn-success btn-rounded" id="addProject-btn"><i class="mdi mdi-plus me-1"></i> Add New Project</a>
+                                                    <a href="http://localhost:5173/admin/newproject" class="btn btn-success btn-rounded" id="addProject-btn"><i class="fa-solid fa-plus"></i> Add New Project</a>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="">
-                                            <div class="table-responsive">
-                                                <table class="table project-list-table align-middle table-nowrap dt-responsive nowrap w-100 table-borderless" id="projectList-table">
-                                                    <thead class="table-light">
-                                                        <tr>
-                                                            <th scope="col" style={{ "width": "60px" }}>#</th>
-                                                            <th scope="col">Projects</th>
-                                                            <th scope="col">Open Bugs</th>
-                                                            <th scope="col">In Progress</th>
-                                                            <th scope="col">Rechecking</th>
-                                                            <th scope="col">Closed</th>
-                                                            <th scope="col">Actions</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {projects.map((project, index) => {
-                                                            return (
-                                                                <tr>
-                                                                    <td>
-                                                                        <div>{index + 1}</div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div class="d-flex align-items-center">
-                                                                        <div class="avatar-sm bg-light rounded p-2">
-                                                                            <img src={project.projectImage ?? "../../assets/sampleProject.jpg"} alt="Project Icon" class="img-fluid rounded-circle"/>
-                                                                        </div>
-                                                                        <div class="ps-3">
-                                                                            <h5 class="text-truncate font-size-14">
-                                                                                <a href="javascript: void(0);" class="text-dark">{project.projectName ?? ""}</a>
-                                                                            </h5>
-                                                                            <p class="text-muted mb-0">{project.projectDesc ?? " "}</p>
-                                                                        </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>13</td>
-                                                                    <td>10</td>
-                                                                    <td>2</td>
-                                                                    <td>1</td>
-                                                                    <td>
-                                                                        <button class="btn btn-primary">View More</button>
-                                                                    </td>
-                                                                </tr>
-
-
-                                                            )
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
+                                        <ProjectGrid />
                                     </div>
                                 </div>
                             </div>

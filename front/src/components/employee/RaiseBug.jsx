@@ -7,6 +7,7 @@ import axios from "axios";
 import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import SweetAlert from 'react-bootstrap-sweetalert';
+import { BackBtn } from "../../helper/backButton";
 export function RaiseBug() {
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const { register, handleSubmit, formState: { errors }, setValue } = useForm({
@@ -98,10 +99,10 @@ export function RaiseBug() {
     };
 
     const renderFiles = () => files.map(file => (
-        <div key={file.name} style={{ display: 'flex', alignItems: 'center', margin: '10px 0' }}>
+        <div key={file.name} style={{ display: 'flex', alignItems: 'center', margin: '10px 0', justifyContent: 'space-between' }}>
             {file.type.startsWith('image/') && <img src={file.preview} alt={file.name} width="50px" style={{ marginRight: '10px' }} />}
             <p style={{ margin: 0 }}>{file.name}</p>
-            <button onClick={() => removeFile(file.name)} style={{ marginLeft: '10px' }}>Remove</button>
+            <button className="btn btn-danger" onClick={() => removeFile(file.name)} style={{ marginLeft: '10px' }}>Remove</button>
         </div>
     ));
 
@@ -135,7 +136,10 @@ export function RaiseBug() {
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box d-flex align-items-center justify-content-between">
-                                    <h4 class="mb-0 font-size-18">New bug</h4>
+                                    <div className="d-flex align-items-center">
+                                        <BackBtn />
+                                        <h4 class="mb-0 font-size-18">New bug</h4>
+                                    </div>
 
                                     <div class="page-title-right">
                                         <ol class="breadcrumb m-0">
@@ -171,11 +175,19 @@ export function RaiseBug() {
                                                 <label for="task-assign-input" class="form-label">Assign To</label><span class="text-danger"> *</span>
                                                 <select class="form-select" name="" id="" {...register('assignedTo')}>
                                                     <option value="">Select Employee</option>
-                                                    {employees.map((employee) => (
+                                                    {/* {employees.map((employee) => (
                                                         <option key={employee.email} value={employee.email}>
                                                             {employee.firstName + " " + employee.lastName}
                                                         </option>
+                                                    ))} */}
+                                                    {employees.map((employee) => (
+                                                        employee.role === "Developer" ? (
+                                                            <option key={employee.email} value={employee.email}>
+                                                                {employee.firstName + " " + employee.lastName}
+                                                            </option>
+                                                        ) : null
                                                     ))}
+
                                                 </select>
                                                 <small className="text-danger">
                                                     {errors?.assignedTo && errors.assignedTo.message}
@@ -188,7 +200,7 @@ export function RaiseBug() {
                                                 <input {...getInputProps()} />
                                                 <div className="dz-message text-center">
                                                     <div className="mb-3">
-                                                        <i className="display-4 text-muted bx bxs-cloud-upload"></i>
+                                                        <i class=" fa-solid fa-cloud-arrow-up"></i>
                                                     </div>
                                                     <h4>Drop files here or click to upload.</h4>
                                                 </div>
@@ -220,9 +232,9 @@ export function RaiseBug() {
                                             <div class="mb-3">
                                                 <label class="form-label" for="project-status-input">Developer Status</label>
                                                 <select class="form-select" id="project-status-input" disabled>
-                                                    <option value="" selected>Open</option>
-                                                    <option value="">Inprogress</option>
-                                                    <option value="">Done</option>
+                                                    <option selected>INPROGRESS</option>
+                                                    <option >Invalid</option>
+                                                    <option >Done</option>
                                                 </select>
 
                                             </div>

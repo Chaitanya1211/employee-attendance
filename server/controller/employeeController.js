@@ -1,11 +1,18 @@
 const mongoose = require("mongoose")
+// face model
+const faceapi = require("face-api.js");
+const { Canvas, Image } = require('canvas');
+const canvas = require("canvas")
+faceapi.env.monkeyPatch({ Canvas, Image });
 const Employee = require("../models/employeeModel");
 const Attendance = require("../models/attendanceModel");
+const Face = require("../models/faceModel");
 const Project = require("../models/projectModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Bug = require("../models/bugModel");
 const Comment = require("../models/commentModel");
+const BugHistory = require("../models/bugHistoryModel");
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 cloudinary.config({
@@ -13,22 +20,37 @@ cloudinary.config({
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET
 });
+const dir = "E:/attendance/server";
+// load model function
+async function LoadModels() {
+    // Load the models
+    console.log("loading model");
+    await faceapi.nets.faceRecognitionNet.loadFromDisk(dir + "/faceApiModel");
+    await faceapi.nets.faceLandmark68Net.loadFromDisk(dir + "/faceApiModel");
+    await faceapi.nets.ssdMobilenetv1.loadFromDisk(dir + "/faceApiModel");
+}
 
 async function register(req, res) {
     try {
-        const { email, password } = req.body;
+        const { email, password, inputImages } = req.body;
         const response = await Employee.findOne({ email: email });
         if (response) {
             res.status(409).json({ message: 'Employee already Exists' });
         } else {
             const password_hash = await bcrypt.hash(password, 10);
-            try {
+            const addFace = await registerFace(email, inputImages);
+            if (addFace) {
+                console.log("Face added");
                 const createdEmployee = await Employee.create({ ...req.body, password_hash: password_hash });
-                console.log("Employee created")
-                res.status(201).json({ message: 'Employee created successfully', employee: createdEmployee });
-            } catch (error) {
-                console.error('Error creating employee:', error);
-                res.status(500).json({ error: 'Internal server error' });
+                if (createdEmployee) {
+                    res.status(201).json({ message: 'Employee created successfully', employee: createdEmployee });
+                } else {
+                    console.log("Employee data not saved");
+                    res.status(500).json({ error: 'Internal server error' });
+                }
+            } else {
+                console.log("Face not added");
+                res.status(204).json({ error: 'Face data not saved' });
             }
         }
     } catch (error) {
@@ -69,9 +91,11 @@ async function login(req, res) {
 }
 
 async function getRole(req, res) {
+    const email=req.user.email;
+    const details = await Employee.find({email:email},"firstName lastName profileImg role");
     try {
         const role = req.user.role;
-        res.status(200).json({ message: "Role found", role: role });
+        res.status(200).json({ message: "Role found", role: role , details:details });
     } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -125,27 +149,32 @@ async function updateProfile(req, res) {
 
 async function markLogin(req, res) {
     const email = req.user.email;
+    const { image } = req.body;
     const currentDate = getCurrentDate();
     const currentDateTime = getCurrentDateTime();
     const updateFields = {
         login: currentDateTime,
         isLoggedIn: true
     };
-
     try {
-        const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
-        if (result) {
-            // attendance marked
-            let attendance = await getAllAttendance(email);
-            if (attendance.length != 0) {
-                res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: attendance })
+        const status = await matchFace(email, image);
+        console.log(status);
+        if (status) {
+            console.log("Face matched");
+            const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
+            if (result) {
+                // attendance marked
+                    res.status(200).json({ message: "Attendance marked", todayStatus: result })
             } else {
-                res.status(200).json({ message: "Attendance marked", todayStatus: result, attendance: [] })
+                // attendance not marked
+                res.status(500).json({ message: "Attendance not marked. Internal server error" })
             }
         } else {
-            // attendance not marked
+            // reason no match and response
             res.status(500).json({ message: "Attendance not marked. Internal server error" })
+            console.log("Not matched");
         }
+
     } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -163,14 +192,9 @@ async function markLogout(req, res) {
     try {
         const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
         if (result.nModified != 0) {
-            let attendance = await getAllAttendance(email);
-            if (attendance.length != 0) {
-                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result, attendance: attendance })
-            } else {
-                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result, attendance: attendance })
-            }
+                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result })
         } else {
-            res.status(500).json({ message: "Attendance not marked. Internal server error" })
+                res.status(500).json({ message: "Attendance not marked. Internal server error" })
         }
     } catch (error) {
         console.error('Internal server error', error);
@@ -217,19 +241,6 @@ async function home(req, res) {
     }
 }
 
-async function getAllAttendance(email) {
-    try {
-        const result = await Attendance.find({ employeeEmail: email }).sort({ today: -1 });
-        if (result) {
-            return result;
-        } else {
-            return null;
-        }
-    } catch (error) {
-        return null;
-    }
-}
-
 async function getAllProjects(req, res) {
     const role = req.user.role;
     try {
@@ -251,10 +262,10 @@ async function getProjectDetails(req, res) {
     const role = req.user.role;
     console.log("Role :", role)
     const projectDetails = await getProject(projectId);
-    const bugs = await getProjectBugs(projectId);
+    // const bugs = await getProjectBugs(projectId);
     if (role == "Tester") {
         if (projectDetails != null) {
-            res.status(200).json({ details: projectDetails, bugs: bugs, role: role });
+            res.status(200).json({ details: projectDetails, role: role });
         } else {
             res.status(404).json({ message: "No project found", role: role });
             // console.log("Project not found");
@@ -262,7 +273,7 @@ async function getProjectDetails(req, res) {
 
     } else {
         // for developer
-        res.status(200).json({ details: projectDetails, bugs: bugs, role: role });
+        res.status(200).json({ details: projectDetails, role: role });
         console.log("Api for developer")
     }
 }
@@ -299,9 +310,24 @@ async function raiseBug(req, res) {
     }
 }
 
+async function getBugs(req,res){
+    const email = req.user.email;
+    const projectId = req.query.projectId;
+    const page = req.query.page;
+    const pageSize = req.query.pageSize;
+    const {type, priority, curr_status, role} = req.body;
+    console.log("Request bidy :", req.body);
+    const [bugs,totalItems] = await getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize, role);
+    if(bugs){
+        res.status(200).json({message:"Bugs found", bugs:bugs, page:page,totalPages: Math.ceil(totalItems / pageSize)})
+    }else{
+        res.status(404).json({message:"Bugs not found"})
+    }
+}
+
 async function allEmployees(req, res) {
     try {
-        const employeeData = await Employee.find({}, 'firstName lastName email')
+        const employeeData = await Employee.find({}, 'firstName lastName email role')
         if (employeeData) {
             res.status(200).json({ employees: employeeData })
         } else {
@@ -319,7 +345,7 @@ async function bugDetails(req, res) {
     const bugId = new mongoose.Types.ObjectId(req.params.bugId);
     // mark as viewed
     const isViewed = await markAsViewed(bugId);
-    if(isViewed){
+    if (isViewed) {
         try {
             const bug = await Bug.aggregate([{
                 $match: {
@@ -335,34 +361,34 @@ async function bugDetails(req, res) {
                 }
             },
             {
-                $unwind : "$raising_employee"
+                $unwind: "$raising_employee"
             },
             {
-                $lookup:{
+                $lookup: {
                     from: "employees",
                     localField: "assignedTo",
                     foreignField: "email",
                     as: 'assigned_employee'
                 }
-            },{
-                $unwind : "$assigned_employee"
-            },{
+            }, {
+                $unwind: "$assigned_employee"
+            }, {
                 $lookup: {
                     from: "employees",
                     localField: "updated_by",
                     foreignField: "email",
                     as: 'updated_employee'
                 }
-            },{
-                $unwind : {
-                    path : "$updated_employee",
+            }, {
+                $unwind: {
+                    path: "$updated_employee",
                     preserveNullAndEmptyArrays: true
                 }
-            },{
-                $project:{
+            }, {
+                $project: {
                     "title": 1,
                     "description": 1,
-                    "images":1,
+                    "images": 1,
                     "raisedByName": "$raising_employee.firstName",
                     "raisedBylastName": "$raising_employee.lastName",
                     "raisedByProfile": "$raising_employee.profileImg",
@@ -372,162 +398,278 @@ async function bugDetails(req, res) {
                     "raised_on": 1,
                     "priority": 1,
                     "current_status": 1,
-                    "qa_status":1,
-                    "dev_status":1,
-                    "updated_by" : 1,
-                    "updatedByName" : "$updated_employee.firstName",
-                    "updatedByLastName" : "$updated_employee.lastName",
-                    "updatedByProfile" : "$updated_employee.profileImg",
-                    "updatedAt":1,
-                    "latest_update":1
+                    "qa_status": 1,
+                    "dev_status": 1,
+                    "updated_by": 1,
+                    "updatedByName": "$updated_employee.firstName",
+                    "updatedByLastName": "$updated_employee.lastName",
+                    "updatedByProfile": "$updated_employee.profileImg",
+                    "updatedAt": 1,
+                    "latest_update": 1
                 }
             }
             ]);
             if (bug.length != 0) {
                 const comments = await bugComments(tempBugId);
-                res.status(200).json({ message: "Bug found", bug: bug, comments : comments, role:role })
+                res.status(200).json({ message: "Bug found", bug: bug, comments: comments, role: role })
             } else {
-                res.status(404).json({ message: "Bug not found", role:role });
+                res.status(404).json({ message: "Bug not found", role: role });
             }
         } catch (error) {
             console.error('Internal server error', error);
             res.status(500).json({ error: 'Internal server error' });
         }
-    }else{
+    } else {
         console.log("unable to mark viewed");
         res.status(500).json({ error: 'Internal server error' });
     }
-    
+
 }
 
-async function addComment(req,res){
-    const {bugId} = req.body;
+async function addComment(req, res) {
+    const { bugId, comment } = req.body;
     const email = req.user.email;
-    try{
-        const newComment = await Comment.create({...req.body,by:email})
+    try {
+        const newComment = await Comment.create({ ...req.body, by: email })
         const comments = await bugComments(bugId);
-        if(newComment){
-            res.status(201).json({message : "Comment addded successfully", comments:comments})
-        }else{
-            res.status(500).json({ message:"Comment addition unsuccessfull", error: 'Internal server error', comments:comments });
+        if (newComment) {
+            // store history
+            const history = await BugHistory.create({ bugId: bugId, by: email, type: "COMMENT", data: comment });
+            if (history) {
+                res.status(201).json({ message: "Comment addded successfully", comments: comments })
+            } else {
+                res.status(500).json({ message: "Comment addition unsuccessfull", error: 'Internal server error', comments: comments });
+            }
+        } else {
+            res.status(500).json({ message: "Comment addition unsuccessfull", error: 'Internal server error', comments: comments });
         }
-    }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 }
 
-async function getAllComments(req,res){
+async function getAllComments(req, res) {
     const bugId = req.params.bugId;
-    try{
+    try {
         const comments = await bugComments(bugId);
-        if(comments.length !=0){
+        if (comments.length != 0) {
             // comments present
-            res.status(200).json({message:"Comments present", comments:comments});
-        }else{
+            res.status(200).json({ message: "Comments present", comments: comments });
+        } else {
             // no comments avaiblable
-            res.status(404).json({message:"Comments not present", comments:comments})
+            res.status(404).json({ message: "Comments not present", comments: comments })
         }
 
-    }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' }); 
+        res.status(500).json({ error: 'Internal server error' });
     }
 }
 
-async function updateBugStatus(req,res){
-    const role=req.user.role;
+async function updateBugStatus(req, res) {
+    const role = req.user.role;
     const email = req.user.email;
-    const {bugId} = req.body;
-    const currentDateTime=getISTDate();
-    const updatedData={
-        updated_by : email,
-        latest_update : currentDateTime
+    const { bugId } = req.body;
+    const currentDateTime = getISTDate();
+    const updatedData = {
+        updated_by: email,
+        latest_update: currentDateTime
     };
     const castedId = new mongoose.Types.ObjectId(bugId);
-    try{
-        if(role=="Developer"){
+    try {
+        if (role == "Developer") {
             // developer
-            const {dev_status} = req.body;
-            
-            const bugUpdate = await Bug.updateOne({_id:castedId},{$set : {...updatedData, dev_status:dev_status,current_status:dev_status}});
-            if(bugUpdate){
-                res.status(200).json({message: "Status updated successfully", updated:bugUpdate});
-            }else{
-                res.status(500).json({message : "Not updated"})
+            const { dev_status } = req.body;
+
+            const bugUpdate = await Bug.updateOne({ _id: castedId }, { $set: { ...updatedData, dev_status: dev_status, current_status: dev_status } });
+            if (bugUpdate) {
+                // add history
+                const history = BugHistory.create({ bugId: bugId, by: email, type: "STATUS", data: dev_status })
+                res.status(200).json({ message: "Status updated successfully", updated: bugUpdate });
+            } else {
+                res.status(500).json({ message: "Not updated" })
             }
-        }else{
+        } else {
             // tester
-            const {qa_status} = req.body;
-            const bugUpdate = await Bug.updateOne({_id:castedId},{$set : {...updatedData, qa_status:qa_status, current_status:qa_status}});
-            if(bugUpdate){
-                res.status(200).json({message: "Status updated successfully", updated:bugUpdate});
-            }else{
-                res.status(500).json({message : "Not updated"})
+            const { qa_status } = req.body;
+            const bugUpdate = await Bug.updateOne({ _id: castedId }, { $set: { ...updatedData, qa_status: qa_status, current_status: qa_status } });
+            if (bugUpdate) {
+                // add history
+                const history = BugHistory.create({ bugId: bugId, by: email, type: "STATUS", data: qa_status })
+                res.status(200).json({ message: "Status updated successfully", updated: bugUpdate });
+            } else {
+                res.status(500).json({ message: "Not updated" })
             }
         }
-    }catch(error){
+    } catch (error) {
         console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' }); 
+        res.status(500).json({ error: 'Internal server error' });
     }
-    
+
 }
 
-async function getStatusCount(req,res){
+async function getStatusCount(req, res) {
     const projectId = req.params.projectId;
     const castedId = new mongoose.Types.ObjectId(projectId);
-    var counts={};
-    try{
-        const total = await Bug.countDocuments({projectId:castedId});
+    var counts = {};
+    try {
+        const total = await Bug.countDocuments({ projectId: castedId });
         counts["total"] = total;
-        const closed = await Bug.countDocuments({ $and :[{current_status : "CLOSED"}, {projectId:castedId}]});
+        const closed = await Bug.countDocuments({ $and: [{ current_status: "CLOSED" }, { projectId: castedId }] });
         counts["closed"] = closed;
-        const open = await Bug.countDocuments({ $and :[{current_status : "OPEN"}, {projectId:castedId}]});
+        const open = await Bug.countDocuments({ $and: [{ current_status: "OPEN" }, { projectId: castedId }] });
         counts["open"] = open;
-        const done = await Bug.countDocuments({ $and :[{current_status : "DONE"}, {projectId:castedId}]});
+        const done = await Bug.countDocuments({ $and: [{ current_status: "DONE" }, { projectId: castedId }] });
         counts["done"] = done;
-        const inprogress = await Bug.countDocuments({ $and :[{current_status : "INPROGRESS"}, {projectId:castedId}]});
+        const inprogress = await Bug.countDocuments({ $and: [{ current_status: "INPROGRESS" }, { projectId: castedId }] });
         counts["inprogress"] = inprogress;
-        const recheck = await Bug.countDocuments({ $and :[{current_status : "RECHECKING"}, {projectId:castedId}]});
+        const recheck = await Bug.countDocuments({ $and: [{ current_status: "RECHECKING" }, { projectId: castedId }] });
         counts["rechecking"] = recheck;
-        console.log(counts);
-        res.status(200).json({message:"Details found", count:counts})
-    }catch(error){
+        res.status(200).json({ message: "Details found", count: counts })
+    } catch (error) {
         console.error('Internal server error', error);
-        res.status(500).json({ error: 'Internal server error' }); 
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+async function getEmployeeAttendance(req, res) {
+    const email = req.user.email;
+    const page = req.query.page;
+    const pageSize = req.query.pageSize;
+    const [totalItems,attendance] = await getAllAttendance(email, page, pageSize)
+    if(attendance){
+        res.status(200).json({message:"Attendance", attendance:attendance, page:page,totalPages: Math.ceil(totalItems / pageSize)})
+    }else{
+        res.status(404).json({message:"No data found"})
     }
 }
 
 // No route functions
-async function bugComments(bugId){
-    // const bugId = req.params.bugId;
-        const allComments = await Comment.aggregate([
-            {
-                $match:{
-                    bugId : bugId
-                }
-            },
-            {
-                $lookup:{
-                    from:"employees",
-                    localField : "by",
-                    foreignField : "email",
-                    as:"employee"
-                }
-            },{
-                $unwind:"$employee"
-            },{
-                $project:{
-                    "bugId" : 1,
-                    "comment" : 1,
-                    "employee.firstName" : 1,
-                    "employee.lastName" : 1,
-                    "employee.profileImg":1,
-                    "at" : 1
-                }
+
+async function getAllAttendance(email, page, pageSize) {
+    try {
+        const totalItems = await Attendance.countDocuments({employeeEmail:email});
+        const result = await Attendance.find({ employeeEmail: email }).skip((page - 1) * pageSize).limit(pageSize).sort({ today: -1 });
+        if (result) {
+            return [totalItems,result];
+        } else {
+            return null;
+        }
+    } catch (error) {
+        return null;
+    }
+}
+
+async function registerFace(userId, faceImageArray) {
+    await LoadModels();
+    try {
+        if (!faceImageArray || faceImageArray.length !== 5) {
+            return false;
+        }
+        const labeledFaceDescriptors = [];
+
+        for (let image of faceImageArray) {
+            const img = await canvas.loadImage(image);
+            const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+
+            if (!detections) {
+                console.log("Face not recognised");
+                return false;
             }
-        ]);
-        return allComments;
+            const faceDescriptor = detections.descriptor;
+            labeledFaceDescriptors.push(Array.from(faceDescriptor));
+            console.log("Image saved");
+        }
+
+        // Save the labeled face descriptors to MongoDB
+        console.log("Face descriptors :", labeledFaceDescriptors);
+        const faceData = new Face({
+            user: userId,
+            descriptions: labeledFaceDescriptors,
+        });
+
+        const result = await faceData.save();
+        if (result) {
+            console.log("Face saved");
+            return true;
+        } else {
+            return false;
+        }
+
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
+async function matchFace(email, image) {
+    await LoadModels();
+    try {
+        const img = await canvas.loadImage(image);
+        const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+
+        if (!detections) {
+            // Face not detected
+            return false
+        }
+
+        const queryDescriptor = detections.descriptor;
+        // Load the specific user's face data from the database
+        const userFaceData = await Face.findOne({ user: email });
+        let bestMatch = null;
+        let bestDistance = 0;
+        let matchDistance = 0.5;
+        // Compare query descriptor with stored descriptors of the specific user
+        for (const descriptor of userFaceData.descriptions) {
+            const distance = faceapi.euclideanDistance(queryDescriptor, descriptor);
+            if (distance > bestDistance) {
+                bestDistance = distance;
+                bestMatch = userFaceData;
+            }
+        }
+        console.log("Best distance :", bestDistance);
+
+        if (bestDistance < matchDistance) {
+            return true;
+        } else {
+            return false;
+        }
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
+async function bugComments(bugId) {
+    // const bugId = req.params.bugId;
+    const allComments = await Comment.aggregate([
+        {
+            $match: {
+                bugId: bugId
+            }
+        },
+        {
+            $lookup: {
+                from: "employees",
+                localField: "by",
+                foreignField: "email",
+                as: "employee"
+            }
+        }, {
+            $unwind: "$employee"
+        }, {
+            $project: {
+                "bugId": 1,
+                "comment": 1,
+                "employee.firstName": 1,
+                "employee.lastName": 1,
+                "employee.profileImg": 1,
+                "at": 1
+            }
+        }
+    ]);
+    return allComments;
 }
 
 function getCurrentDate() {
@@ -569,14 +711,40 @@ async function getProject(projectId) {
 
 }
 
-async function getProjectBugs(projectId) {
+const buildQuery = (projectId, curr_status, priority, type, email, role) => {
+    let query = {
+      projectId: projectId,
+    };
+  
+    if (curr_status != '') {
+      query.current_status = curr_status;
+    }
+  
+    if (priority != '') {
+      query.priority = priority;
+    }
+  
+    if (type === "self") {
+        if(role==="Tester"){
+            query.raisedBy = email
+        }else{
+            query.assignedTo = email;
+        }
+    }
+  
+    return query;
+}
+
+async function getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize, role) {
+    const castedpageSize = parseInt(pageSize);
+    const query = buildQuery(projectId, curr_status, priority, type, email, role);
+    console.log("Query :", query);
     try {
         // const result = await Bug.find({ projectId: projectId });
+        const totalItems = await Bug.countDocuments({projectId: projectId});
         const result = await Bug.aggregate([
             {
-                $match: {
-                    projectId: projectId
-                }
+                $match: query
             },
             {
                 $lookup: {
@@ -597,16 +765,16 @@ async function getProjectBugs(projectId) {
                 }
             }, {
                 $unwind: "$assigned_employee"
-            },{
+            }, {
                 $lookup: {
                     from: "employees",
                     localField: "updated_by",
                     foreignField: "email",
                     as: 'updated_employee'
                 }
-            },{
-                $unwind : {
-                    path : "$updated_employee",
+            }, {
+                $unwind: {
+                    path: "$updated_employee",
                     preserveNullAndEmptyArrays: true
                 }
             }, {
@@ -620,18 +788,18 @@ async function getProjectBugs(projectId) {
                     "raised_on": 1,
                     "priority": 1,
                     "current_status": 1,
-                    "isViewed" :1,
-                    "updated_by" : 1,
-                    "updatedByName" : "$updated_employee.firstName",
-                    "updatedByLastName" : "$updated_employee.lastName",
-                    "updatedByProfile" : "$updated_employee.profileImg",
-                    "updatedAt":1,
-                    "latest_update":1
+                    "isViewed": 1,
+                    "updated_by": 1,
+                    "updatedByName": "$updated_employee.firstName",
+                    "updatedByLastName": "$updated_employee.lastName",
+                    "updatedByProfile": "$updated_employee.profileImg",
+                    "updatedAt": 1,
+                    "latest_update": 1
                 }
             }
-        ]).sort({ latest_update: -1 });
+        ]).skip( (page-1) * pageSize ).limit(castedpageSize).sort({ latest_update: -1 });
         if (result) {
-            return result;
+            return [result,totalItems];
         } else {
             return null;
         }
@@ -641,14 +809,14 @@ async function getProjectBugs(projectId) {
     }
 }
 
-async function markAsViewed(bugId){
+async function markAsViewed(bugId) {
     const data = {
-        isViewed:true
+        isViewed: true
     }
-    const result = await Bug.updateOne({_id : bugId}, {$set:data});
-    if(result){
+    const result = await Bug.updateOne({ _id: bugId }, { $set: data });
+    if (result) {
         return true;
-    }else{
+    } else {
         return false;
     }
 }
@@ -678,3 +846,6 @@ exports.addComment = addComment;
 exports.getAllComments = getAllComments;
 exports.updateBugStatus = updateBugStatus;
 exports.getStatusCount = getStatusCount;
+// exports.getHistory = getHistory;
+exports.getEmployeeAttendance = getEmployeeAttendance;
+exports.getBugs = getBugs;
