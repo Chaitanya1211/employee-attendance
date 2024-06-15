@@ -175,11 +175,19 @@ export function RaiseBug() {
                                                 <label for="task-assign-input" class="form-label">Assign To</label><span class="text-danger"> *</span>
                                                 <select class="form-select" name="" id="" {...register('assignedTo')}>
                                                     <option value="">Select Employee</option>
-                                                    {employees.map((employee) => (
+                                                    {/* {employees.map((employee) => (
                                                         <option key={employee.email} value={employee.email}>
                                                             {employee.firstName + " " + employee.lastName}
                                                         </option>
+                                                    ))} */}
+                                                    {employees.map((employee) => (
+                                                        employee.role === "Developer" ? (
+                                                            <option key={employee.email} value={employee.email}>
+                                                                {employee.firstName + " " + employee.lastName}
+                                                            </option>
+                                                        ) : null
                                                     ))}
+
                                                 </select>
                                                 <small className="text-danger">
                                                     {errors?.assignedTo && errors.assignedTo.message}
@@ -224,9 +232,9 @@ export function RaiseBug() {
                                             <div class="mb-3">
                                                 <label class="form-label" for="project-status-input">Developer Status</label>
                                                 <select class="form-select" id="project-status-input" disabled>
-                                                    <option value="" selected>Open</option>
-                                                    <option value="">Inprogress</option>
-                                                    <option value="">Done</option>
+                                                    <option selected>INPROGRESS</option>
+                                                    <option >Invalid</option>
+                                                    <option >Done</option>
                                                 </select>
 
                                             </div>

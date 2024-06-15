@@ -327,7 +327,7 @@ async function getBugs(req,res){
 
 async function allEmployees(req, res) {
     try {
-        const employeeData = await Employee.find({}, 'firstName lastName email')
+        const employeeData = await Employee.find({}, 'firstName lastName email role')
         if (employeeData) {
             res.status(200).json({ employees: employeeData })
         } else {
@@ -611,7 +611,6 @@ async function matchFace(email, image) {
 
         if (!detections) {
             // Face not detected
-            console.log("Face not found");
             return false
         }
 
@@ -734,7 +733,7 @@ const buildQuery = (projectId, curr_status, priority, type, email, role) => {
     }
   
     return query;
-};
+}
 
 async function getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize, role) {
     const castedpageSize = parseInt(pageSize);

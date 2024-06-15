@@ -23,7 +23,7 @@ export function EmployeeSidebar() {
         });
     }, [token]);
 
-    const isProjectsActive = location.pathname.startsWith('/projects');
+    const isProjectsActive = location.pathname.startsWith('/projects') || location.pathname.startsWith('/bug') || location.pathname.startsWith('/raiseBug');
 
     const logout = () => {
         // clear token
@@ -45,15 +45,17 @@ export function EmployeeSidebar() {
                         <i className="fa-solid fa-house me-2"></i> Home
                     </NavLink>
                 </li>
-                <li className="nav-item">
-                    <NavLink
-                        to="/projects"
-                        className={`nav-link text-white ${isProjectsActive ? 'active' : ''}`}
-                        activeClassName="active"
-                    >
-                        <i className="fa-solid fa-code me-2"></i> Projects
-                    </NavLink>
-                </li>
+                {role != "Intern" && <>
+                    <li className="nav-item">
+                        <NavLink
+                            to="/projects"
+                            className={`nav-link text-white ${isProjectsActive ? 'active' : ''}`}
+                            activeClassName="active"
+                        >
+                            <i className="fa-solid fa-code me-2"></i> Projects
+                        </NavLink>
+                    </li>
+                </>}
                 <li className="nav-item">
                     <NavLink exact to="/profile" className="nav-link text-white" activeClassName="active">
                         <i className="fa-solid fa-user me-2"></i> Profile

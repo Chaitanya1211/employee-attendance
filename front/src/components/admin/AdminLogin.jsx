@@ -71,8 +71,8 @@ export function AdminLogin() {
                                     <div className="row">
                                         <div className="col-7">
                                             <div className=" p-4">
-                                                <h5 >Welcome Admin !</h5>
-                                                <p>Sign in to continue</p>
+                                                <h5 className='text-white'>Welcome Admin !</h5>
+                                                <p className='text-white'>Sign in to continue</p>
                                             </div>
                                         </div>
                                         <div className="col-5 align-self-end">

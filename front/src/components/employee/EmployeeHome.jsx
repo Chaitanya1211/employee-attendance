@@ -17,6 +17,9 @@ export function EmployeeHome() {
     const [image, setImage] = useState();
     const [loader, setLoader] = useState(false);
     const [reRender, setReRender] = useState(true);
+
+    const [showWarningAlert, setShowWarningAlert] = useState(false);
+
     useEffect(() => {
         axios({
             url: "http://localhost:8080/employee/home",
@@ -78,11 +81,15 @@ export function EmployeeHome() {
             console.log("Error : ", error);
             if (error.response && error.response.status === 500) {
                 console.log("Internal server error")
-                setLoginModal(false)
+                setLoginModal(false);
+                setShowWarningAlert(true);
             }
             setLoader(false);
         })
     };
+    const onConfirm = () => {
+        setShowWarningAlert(false);
+    }
     const showLogoutModal = () => {
 
         setLogoutModal(true);
@@ -131,7 +138,7 @@ export function EmployeeHome() {
                     <div class="card-body">
                         <div className="d-flex align-items-center justify-content-center">
                             <div className="col-lg-3">
-                                <img src={profile.profileImg ?? "../../assets/no-profile.png"} alt="Profile.png" height="50" class="mx-auto d-block rounded-circle" />
+                                <img src={profile.profileImg ?? noProfile} alt="Profile.png" height="50" class="mx-auto d-block rounded-circle" />
                             </div>
                             <div className="col-lg-6 text-start">
                                 <h6 class="mb-1">{profile.firstName + " "}
@@ -166,6 +173,17 @@ export function EmployeeHome() {
                         </div>
                     </div>
                 </div>
+            </SweetAlert>
+
+            <SweetAlert
+                warning
+                confirmBtnText="OK"
+                confirmBtnBsStyle="success"
+                title="Unable to Mark Attendance"
+                show={showWarningAlert}
+                onConfirm={onConfirm}
+            >
+                We are uanble to mark your attendance. Please try again later
             </SweetAlert>
 
             {loader && <Loader />}

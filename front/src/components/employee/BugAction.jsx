@@ -7,6 +7,7 @@ import { toISTLocaleString } from "../../helper/dates";
 import { useForm } from "react-hook-form";
 import defaultImage from "../../assets/defaultImage.jpg";
 import { BackBtn } from "../../helper/backButton";
+import noProfile from "../../assets/no-profile.png";
 export function BugAction() {
     const { bugId } = useParams();
     const [bug, setBug] = useState([]);
@@ -108,14 +109,14 @@ export function BugAction() {
     }
     return (
         <>
-        {isSuccess && 
-            <div id="snackBarSuccess">
-                <div class="d-flex align-items-center">
-                    <i class="fa-solid fa-circle-check mr-3"></i>
-                    <span>Status updated successfully</span>
+            {isSuccess &&
+                <div id="snackBarSuccess">
+                    <div class="d-flex align-items-center">
+                        <i class="fa-solid fa-circle-check me-3"></i>
+                        <span>Status updated successfully</span>
+                    </div>
                 </div>
-            </div>
-        }
+            }
             <div className="d-flex">
                 <div className="col-lg-2 position-fixed">
                     <EmployeeSidebar />
@@ -124,21 +125,21 @@ export function BugAction() {
                     <div className="col-lg-12 p-5">
                         <div class="row">
                             <div class="col-lg-12">
-                            <div class="col-12">
-                                <div class="page-title-box d-flex align-items-center justify-content-between">
-                                    <div className="d-flex align-items-center">
-                                        <BackBtn />
-                                        <h4 class="mb-0 font-size-18">Bug overview</h4>
-                                    </div>
+                                <div class="col-12">
+                                    <div class="page-title-box d-flex align-items-center justify-content-between">
+                                        <div className="d-flex align-items-center">
+                                            <BackBtn />
+                                            <h4 class="mb-0 font-size-18">Bug overview</h4>
+                                        </div>
 
-                                    <div class="page-title-right">
-                                        <ol class="breadcrumb m-0">
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Bug</a></li>
-                                            <li class="breadcrumb-item active">Project</li>
-                                        </ol>
+                                        <div class="page-title-right">
+                                            <ol class="breadcrumb m-0">
+                                                <li class="breadcrumb-item"><a href="javascript: void(0);">Bug</a></li>
+                                                <li class="breadcrumb-item active">Project</li>
+                                            </ol>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
                                 <div class="card">
                                     <div class="card-body p-4">
@@ -154,7 +155,9 @@ export function BugAction() {
                                                                             bugImages.map((image, index) => {
                                                                                 return (
                                                                                     <a class={index == 0 ? "nav-link active" : "nav-link"} id={`product-${index + 1}-tab`} data-bs-toggle="pill" href={`#product-${index + 1}`} role="tab" aria-controls={`product-${index + 1}`} aria-selected="true">
+
                                                                                         <img src={image} alt="" class="img-fluid mx-auto d-block rounded" />
+
                                                                                     </a>
                                                                                 );
                                                                             })
@@ -169,7 +172,9 @@ export function BugAction() {
                                                                                 return (
                                                                                     <div class={index == 0 ? "tab-pane fade show active" : "tab-pane fade"} id={`product-${index + 1}`} role="tabpanel" aria-labelledby={`product-${index + 1}-tab`}>
                                                                                         <div>
-                                                                                            <img src={image} alt="" class="img-fluid mx-auto d-block" />
+                                                                                            <a href={image}>
+                                                                                                <img src={image} alt="" class="img-fluid mx-auto d-block" />
+                                                                                            </a>
                                                                                         </div>
                                                                                     </div>
                                                                                 );
@@ -251,7 +256,7 @@ export function BugAction() {
                                                             {bug.updated_by != null ? <>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm bg-light rounded p-2">
-                                                                        <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Profile" class="img-fluid rounded-circle" />
+                                                                        <img src={bug.updatedByProfile ?? noProfile} alt="Profile" class="img-fluid rounded-circle" />
                                                                     </div>
                                                                     <div class="ps-3">
                                                                         <h5 class="text-truncate font-size-14 m-0">
@@ -267,22 +272,25 @@ export function BugAction() {
                                                         {/* QA status */}
                                                         <div class="col-lg-3">
                                                             <h6>QA Status</h6>
-                                                            <select class="form-select" disabled={role === "Developer" || bug.current_status==="CLOSED"} {...register('qa_status')}>
+                                                            <select class="form-select" disabled={role === "Developer" || bug.current_status === "CLOSED"} {...register('qa_status')}>
                                                                 <option value="OPEN" selected={bug.qa_status === "OPEN"}>OPEN</option>
                                                                 <option value="RECHECKING" selected={bug.qa_status === "RECHECKING"}>RECHECKING</option>
                                                                 <option value="CLOSED" selected={bug.qa_status === "CLOSED"}>CLOSED</option>
                                                             </select>
                                                         </div>
+
                                                         {/* Developer status */}
                                                         <div class="col-lg-3">
                                                             <h6>Developer Status</h6>
-                                                            <select class="form-select" disabled={role === "Tester" || bug.current_status==="CLOSED"} {...register('dev_status')} >
-                                                                <option value="INVALID" selected={bug.dev_status === "INVALID"}>INVALID</option>
+                                                            <select class="form-select" disabled={role === "Tester" || bug.current_status === "CLOSED"} {...register('dev_status')} >
                                                                 <option value="INPROGRESS" selected={bug.dev_status === "INPROGRESS"}>INPROGRESS</option>
+                                                                <option value="INVALID" selected={bug.dev_status === "INVALID"}>INVALID</option>
                                                                 <option value="DONE" selected={bug.dev_status === "DONE"}>DONE</option>
                                                             </select>
                                                         </div>
-                                                        <button type="submit" class="btn btn-primary w-md" disabled={bug.current_status === "CLOSED"}>Submit</button>
+                                                        <div className="col-lg-2">
+                                                            <button type="submit" class="btn btn-primary w-md mt-3" disabled={bug.current_status === "CLOSED"}>Submit</button>
+                                                        </div>
                                                     </form>
 
                                                 </div>
@@ -299,7 +307,7 @@ export function BugAction() {
                                                             return (
                                                                 <div class="d-flex py-3 border-bottom">
                                                                     <div class="flex-shrink-0 me-3">
-                                                                        <img src={comment.employee.profileImg} class="avatar-xs rounded-circle" alt="img" />
+                                                                        <img src={comment.employee.profileImg ?? noProfile} class="avatar-xs rounded-circle" alt="img" />
                                                                     </div>
 
                                                                     <div class="flex-grow-1">
@@ -312,7 +320,7 @@ export function BugAction() {
                                                         })}
 
                                                     </> : <h4> No comments yet </h4>}
-                                                    
+
                                                     <ul class="list-inline float-sm-end mb-sm-0 my-2">
                                                         <li class="list-inline-item">
                                                             <a href="javascript: void(0);" onClick={addInput}><i class="far fa-comment-dots me-1" ></i> Comment</a>

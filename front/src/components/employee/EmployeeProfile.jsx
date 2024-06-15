@@ -17,7 +17,9 @@ export function EmployeeProfile() {
     const [showWarningAlert, setShowWarningAlert] = useState(false);
     const [showErrorAlert, setShowErrorAlert] = useState(false);
     const [loader, showLoader] = useState(false);
+    const [defaultImage, setDefaultImage] = useState(noProfile);
     const [imageLoader, setImageLoader] = useState(true);
+
     const onConfirm = () => {
         setShowSuccessAlert(false);
         setShowWarningAlert(false);
@@ -33,7 +35,14 @@ export function EmployeeProfile() {
     const fileInputRef = useRef();
     const handleChange = (event) => {
         const selectedFile = event.target.files[0];
-        setValue('profileImg', selectedFile);
+        if (selectedFile) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setDefaultImage(reader.result);
+            };
+            reader.readAsDataURL(selectedFile);
+            setValue('profileImg', selectedFile);
+          }
     }
 
     const handleLoad = () => {
@@ -149,9 +158,9 @@ export function EmployeeProfile() {
                                     <div className="col-md-3 border-right">
                                         <div className="d-flex flex-column align-items-center text-center p-3 py-4">
                                             <div className="image-parent">
-                                                {/* {imageLoader && <p>Loading...</p>} */}
+                                                {imageLoader && <p>Loading...</p>}
                                                 <img className="rounded-circle mt-5" width="150px"
-                                                    src={employee.profileImg ?? noProfile}
+                                                    src={employee.profileImg ?? defaultImage}
                                                     onLoad={handleLoad}
                                                     alt="Profile I"
                                                 />

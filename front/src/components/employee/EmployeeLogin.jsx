@@ -12,11 +12,23 @@ export function EmployeeLogin() {
     });
     const [showErrorAlert, setShowErrorAlert] = useState(false);
     const hideAlert = () => {
-        // Handle hideAlert action
         setShowErrorAlert(false)
     };
+    const [type, setType] = useState('password');
+    const [toggle, setToggle] = useState(false);
+
+    const changePassword = () => {
+        if (toggle) {
+            // hide password
+            setType('password');
+        } else {
+            // want to see passwod
+            setType('text');
+        }
+        setToggle(!toggle)
+    }
     function onFormSubmit(data) {
-        event.preventDefault();
+        // event.preventDefault();
         axios({
             url: "http://localhost:8080/employee/login",
             method: "POST",
@@ -70,8 +82,8 @@ export function EmployeeLogin() {
                                     <div className="row">
                                         <div className="col-7">
                                             <div className=" p-4">
-                                                <h5 >Welcome Back !</h5>
-                                                <p>Sign in to continue</p>
+                                                <h5 className='text-white'>Welcome Back !</h5>
+                                                <p className='text-white'>Sign in to continue</p>
                                             </div>
                                         </div>
                                         <div className="col-5 align-self-end">
@@ -111,8 +123,16 @@ export function EmployeeLogin() {
                                             <div className="mb-3">
                                                 <label className="form-label">Password</label>
                                                 <div className="input-group auth-pass-inputgroup">
-                                                    <input type="password" className="form-control" placeholder="Enter password"
+                                                    <input type={type} className="form-control" placeholder="Enter password"
                                                         aria-label="Password" aria-describedby="password-addon" {...register('password')} />
+                                                    <button class="btn btn-light " type="button" onClick={changePassword}>
+                                                        {toggle == true ? <>
+                                                            <i class="fa-regular fa-eye-slash"></i>
+                                                        </> : <>
+                                                            <i class="fa-regular fa-eye"></i>
+                                                        </>}
+                                                    </button>
+
                                                 </div>
                                                 <small className="text-danger">
                                                     {errors?.password && errors.password.message}

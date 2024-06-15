@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from 'react-router-dom';
 import noProject from '../../../assets/no-project.png';
+import { toISTLocaleString } from "../../../helper/dates";
 export function ProjectGrid() {
     const [token, getToken] = useState(localStorage.getItem('token') || '');
     const [projects, setProjects] = useState([]);
@@ -43,8 +44,9 @@ export function ProjectGrid() {
                                                         <li class="list-inline-item">
                                                             <p class="text-muted fs-14 mb-1">Client Name</p>
                                                         </li>
+                                                        <br />
                                                         <li class="list-inline-item">
-                                                            <p class="text-muted fs-14 mb-0"><i class="mdi mdi-map-marker"></i> {project.date ?? "Start date"}</p>
+                                                            <p class="text-muted fs-14 mb-0"><i class="far fa-calendar-alt text-primary me-1"></i> {toISTLocaleString(project.startDate)}</p>
                                                         </li>
                                                     </ul>
                                                     <div class="mt-4 hstack gap-2">

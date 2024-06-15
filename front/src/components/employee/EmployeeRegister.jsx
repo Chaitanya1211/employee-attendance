@@ -57,43 +57,50 @@ export function EmployeeRegister() {
     };
 
     const onFormSubmit = (data) => {
-        if(currentStep === 2){
+        if (currentStep === 2) {
             // submit the data
-        setLoader(true);
-        const registerBody = { ...data, email: email, role: role, inputImages : images };
-        console.log(registerBody);
-        axios({
-            url: "http://localhost:8080/employee/register",
-            method: "POST",
-            data: registerBody,
-            headers: {
-                "Content-Type": 'application/json'
-            }
-        }).then((response) => {
-            setLoader(false);
-            console.log(response);
-            if (response.status === 201) {
-                // employee created successfully
-                setShowSuccessAlert(true);
-            }
-        }).catch((error) => {
-            setLoader(false);
-            console.log("Error :", error)
-            if (error.response && error.response.status === 409) {
-                // Conflict - Employee already exists
-                setShowWarningAlert(true);
-            } else if (error.response && error.response.status === 500) {
-                // Handle other errors
-                setShowErrorAlert(true);
-            } else if(error.response && error.response.status === 204){
-                setShowNotDetectedAlert(true);
-            }
-        });
-        }else{
+            setLoader(true);
+            const registerBody = { ...data, email: email, role: role, inputImages: images };
+            console.log(registerBody);
+            axios({
+                url: "http://localhost:8080/employee/register",
+                method: "POST",
+                data: registerBody,
+                headers: {
+                    "Content-Type": 'application/json'
+                }
+            }).then((response) => {
+                setLoader(false);
+                switch (response.status) {
+                    case 201:
+                        setShowSuccessAlert(true);
+                        break;
+                    case 409:
+                        // Conflict - Employee already exists
+                        setShowWarningAlert(true);
+                        break;
+                    case 500:
+                        // Internal Server Error
+                        setShowErrorAlert(true);
+                        break;
+                    case 204:
+                        // No Content
+                        setShowNotDetectedAlert(true);
+                        break;
+                    default:
+                        // Other errors
+                        console.log(`Unhandled error status: ${error.response.status}`);
+                }
+            }).catch((error) => {
+                setLoader(false);
+                console.log("Error Response code:", error.response.status);
+
+
+            });
+        } else {
             setCurrentStep(currentStep + 1);
         }
     };
-
 
     const onErrors = errors => {
         // show errors and not incerment steps
@@ -128,7 +135,7 @@ export function EmployeeRegister() {
                 show={showNotDetectedAlert}
                 onConfirm={hideNotDetected}
             >
-                The face was not recognised. Try again
+                The face was not recognised. Please try again with different images
             </SweetAlert>
             <SweetAlert
                 danger
@@ -391,8 +398,8 @@ export function EmployeeRegister() {
 
                                 {currentStep === 2 && <WebcamCapture onCapture={handleCapture} />}
                                 {currentStep === 2 && <button type="submit" className="btn btn-primary w-md float-end" disabled={imageCount != 5}>Submit</button>}
-                            {currentStep < 2 && <button type="submit" className="btn btn-primary w-md float-end">Next</button>}
-                            {currentStep > 1 && <button onClick={prevStep} type="button" className="btn btn-primary w-md float-end me-4">Previous</button>}
+                                {currentStep < 2 && <button type="submit" className="btn btn-primary w-md float-end">Next</button>}
+                                {currentStep > 1 && <button onClick={prevStep} type="button" className="btn btn-primary w-md float-end me-4">Previous</button>}
                             </form>
 
                         </div>

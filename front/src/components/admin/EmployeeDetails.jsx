@@ -69,36 +69,36 @@ export function EmployeeDetails() {
                                         <ul class="list-unstyled mt-4">
                                             <li>
                                                 <div class="d-flex">
-                                                    <i class="fa-solid fa-phone"></i>
+                                                    <i class="fa-solid fa-phone text-primary"></i>
                                                     <div class="ms-3">
-                                                        <h6 class="fs-14 mb-2">Phone</h6>
+                                                        <h6 class="fs-14 mb-1 ">Phone</h6>
                                                         <p class="text-muted fs-14 mb-0">{profile.contactNumber}</p>
                                                     </div>
                                                 </div>
                                             </li>
                                             <li class="mt-3">
                                                 <div class="d-flex">
-                                                    <i class="fa-regular fa-envelope"></i>
+                                                    <i class="fa-regular fa-envelope text-primary"></i>
                                                     <div class="ms-3">
-                                                        <h6 class="fs-14 mb-2">Email</h6>
+                                                        <h6 class="fs-14 mb-1">Email</h6>
                                                         <p class="text-muted fs-14 mb-0">{profile.email}</p>
                                                     </div>
                                                 </div>
                                             </li>
                                             <li class="mt-3">
                                                 <div class="d-flex">
-                                                    <i class="fa-solid fa-calendar-days"></i>
+                                                    <i class="fa-solid fa-calendar-days text-primary"></i>
                                                     <div class="ms-3">
-                                                        <h6 class="fs-14 mb-2">Date Of Birth</h6>
+                                                        <h6 class="fs-14 mb-1">Date Of Birth</h6>
                                                         <p class="text-muted fs-14 text-break mb-0">{profile.dateOfBirth}</p>
                                                     </div>
                                                 </div>
                                             </li>
                                             <li class="mt-3">
                                                 <div class="d-flex">
-                                                    <i class="fa-solid fa-location-dot"></i>
+                                                    <i class="fa-solid fa-location-dot text-primary"></i>
                                                     <div class="ms-3">
-                                                        <h6 class="fs-14 mb-2">Address</h6>
+                                                        <h6 class="fs-14 mb-1">Address</h6>
                                                         <p class="text-muted fs-14 mb-0">{profile.state + "," + profile.city + "," + profile.postalCode}</p>
                                                     </div>
                                                 </div>
@@ -114,27 +114,27 @@ export function EmployeeDetails() {
                                         <ul class="list-unstyled mt-4">
                                             <li>
                                                 <div class="d-flex">
-                                                    <i class="fa-solid fa-user"></i>
+                                                    <i class="fa-solid fa-user text-primary"></i>
                                                     <div class="ms-3">
-                                                        <h6 class="fs-14 mb-2">Name</h6>
+                                                        <h6 class="fs-14 mb-1">Name</h6>
                                                         <p class="text-muted fs-14 mb-0">{profile.emerName}</p>
                                                     </div>
                                                 </div>
                                             </li>
                                             <li class="mt-3">
                                                 <div class="d-flex">
-                                                    <i class="fa-solid fa-heart"></i>
+                                                    <i class="fa-solid fa-heart text-primary"></i>
                                                     <div class="ms-3">
-                                                        <h6 class="fs-14 mb-2">Relation</h6>
+                                                        <h6 class="fs-14 mb-1">Relation</h6>
                                                         <p class="text-muted fs-14 mb-0">{profile.emerRelation}</p>
                                                     </div>
                                                 </div>
                                             </li>
                                             <li class="mt-3">
                                                 <div class="d-flex">
-                                                    <i class="fa-solid fa-phone"></i>
+                                                    <i class="fa-solid fa-phone text-primary"></i>
                                                     <div class="ms-3">
-                                                        <h6 class="fs-14 mb-2">Phone</h6>
+                                                        <h6 class="fs-14 mb-1">Phone</h6>
                                                         <p class="text-muted fs-14 text-break mb-0">{profile.emerPhoneNo}</p>
                                                     </div>
                                                 </div>

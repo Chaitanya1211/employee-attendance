@@ -128,7 +128,7 @@ export function BugList({showBug, projectId, token, project, role}) {
                 <table class="table project-list-table align-middle table-nowrap dt-responsive nowrap w-100 table-borderless" id="projectList-table">
                     <thead class="table-light">
                         <tr>
-                            <th scope="col" style={{ "width": "60px" }}>#</th>
+                            <th scope="col" style={{ "width": "60px" }}>Sr. No</th>
                             <th scope="col">Bug</th>
                             <th scope="col">Raised On</th>
                             <th scope="col">Latest Update</th>

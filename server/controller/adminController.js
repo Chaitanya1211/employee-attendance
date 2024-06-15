@@ -197,8 +197,10 @@ async function getSingleEmployee(req, res) {
 }
 
 async function createNewProject(req, res) {
+  console.log("koooooook");
   try {
     let projectImg = req.file;
+    console.log("Project image: ", projectImg);
     let imageUrl;
     let publicUrl;
     if (projectImg) {
@@ -211,7 +213,7 @@ async function createNewProject(req, res) {
       console.log("New project created");
       res.status(201).json({ message: 'Project created successfully', project: newProject });
     } else {
-      res.status(500).json({ error: 'Internal server error', message: "Project could notbe created" });
+      res.status(500).json({ error: 'Internal server error', message: "Project could not be created" });
     }
   } catch (error) {
     console.error('Internal server error', error);

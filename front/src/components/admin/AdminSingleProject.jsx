@@ -65,7 +65,7 @@ export function AdminSingleProject() {
                                                 <img src={project.projectImage ?? noProject} alt="" class="avatar-sm img-fluid" />
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15">{project.projectTitle}</h5>
+                                                <h5 class="text-truncate font-size-15">{project.projectName}</h5>
                                                 <p class="text-muted ">{project.projectDesc ?? ""}</p>
                                             </div>
                                         </div>
@@ -84,7 +84,7 @@ export function AdminSingleProject() {
                                                             <div class="flex-shrink-0 align-self-center">
                                                                 <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                                                     <span class="avatar-title rounded-circle bg-primary">
-                                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                                        <i class="fa-solid fa-bug font-size-24"></i>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -104,7 +104,7 @@ export function AdminSingleProject() {
                                                             <div class="flex-shrink-0 align-self-center">
                                                                 <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
                                                                     <span class="avatar-title rounded-circle bg-primary">
-                                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                                        <i class="fa-solid fa-bug-slash font-size-24"></i>
                                                                     </span>
                                                                 </div>
                                                             </div>

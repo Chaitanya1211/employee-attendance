@@ -7,7 +7,8 @@ import { toISTLocaleString } from "../../helper/dates";
 import defaultImage from "../../assets/defaultImage.jpg";
 import { AdminSidebar } from "./AdminSidebar";
 import { BugTimeLine } from './adminComponents/BugTimeline';
-export function SingleBugDetails(){
+import noProfile from "../../assets/no-profile.png";
+export function SingleBugDetails() {
     const { bugId } = useParams();
     const [bug, setBug] = useState([]);
     const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -48,21 +49,21 @@ export function SingleBugDetails(){
                     <div className="col-lg-12 p-5">
                         <div class="row">
                             <div class="col-lg-12">
-                            <div class="col-12">
-                                <div class="page-title-box d-flex align-items-center justify-content-between">
-                                    <div className="d-flex align-items-center">
-                                        <BackBtn />
-                                        <h4 class="mb-0 font-size-18">Bug overview</h4>
-                                    </div>
+                                <div class="col-12">
+                                    <div class="page-title-box d-flex align-items-center justify-content-between">
+                                        <div className="d-flex align-items-center">
+                                            <BackBtn />
+                                            <h4 class="mb-0 font-size-18">Bug overview</h4>
+                                        </div>
 
-                                    <div class="page-title-right">
-                                        <ol class="breadcrumb m-0">
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Bug</a></li>
-                                            <li class="breadcrumb-item active">Project</li>
-                                        </ol>
+                                        <div class="page-title-right">
+                                            <ol class="breadcrumb m-0">
+                                                <li class="breadcrumb-item"><a href="javascript: void(0);">Bug</a></li>
+                                                <li class="breadcrumb-item active">Project</li>
+                                            </ol>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
                                 <div class="card">
                                     <div class="card-body p-4">
@@ -93,7 +94,9 @@ export function SingleBugDetails(){
                                                                                 return (
                                                                                     <div class={index == 0 ? "tab-pane fade show active" : "tab-pane fade"} id={`product-${index + 1}`} role="tabpanel" aria-labelledby={`product-${index + 1}-tab`}>
                                                                                         <div>
-                                                                                            <img src={image} alt="" class="img-fluid mx-auto d-block" />
+                                                                                            <a href={image}>
+                                                                                                <img src={image} alt="" class="img-fluid mx-auto d-block" />
+                                                                                            </a>
                                                                                         </div>
                                                                                     </div>
                                                                                 );
@@ -135,7 +138,7 @@ export function SingleBugDetails(){
                                                                 <h6 className="mb-2">Raised By</h6>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm rounded p-1">
-                                                                        <img src={bug.raisedByProfile ?? defaultImage} alt="Profile" class="img-fluid rounded-circle" />
+                                                                        <img src={bug.raisedByProfile ?? noProfile} alt="Profile" class="img-fluid rounded-circle" />
                                                                     </div>
                                                                     <div class="ps-3">
                                                                         <h5 class="text-truncate font-size-14 m-0">
@@ -175,7 +178,7 @@ export function SingleBugDetails(){
                                                             {bug.updated_by != null ? <>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm bg-light rounded p-2">
-                                                                        <img src={bug.updatedByProfile ?? "../../assets/sampleProject.jpg"} alt="Profile" class="img-fluid rounded-circle" />
+                                                                        <img src={bug.updatedByProfile ?? noProfile} alt="Profile" class="img-fluid rounded-circle" />
                                                                     </div>
                                                                     <div class="ps-3">
                                                                         <h5 class="text-truncate font-size-14 m-0">
@@ -223,7 +226,7 @@ export function SingleBugDetails(){
                                                             return (
                                                                 <div class="d-flex py-3 border-bottom">
                                                                     <div class="flex-shrink-0 me-3">
-                                                                        <img src={comment.employee.profileImg} class="avatar-xs rounded-circle" alt="img" />
+                                                                        <img src={comment.employee.profileImg ?? noProfile} class="avatar-xs rounded-circle" alt="img" />
                                                                     </div>
 
                                                                     <div class="flex-grow-1">

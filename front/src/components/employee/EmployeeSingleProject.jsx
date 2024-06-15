@@ -86,7 +86,7 @@ export function SingleProject() {
                                                 <img src={project.projectImage ?? noProject} alt="" class="avatar-sm" />
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
-                                                <h5 class="text-truncate font-size-15">{project.projectTitle}</h5>
+                                                <h5 class="text-truncate font-size-15">{project.projectName}</h5>
                                                 <p class="text-muted ">{project.projectDesc ?? ""}</p>
                                             </div>
                                         </div>

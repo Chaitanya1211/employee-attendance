@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import inviteSchema from "../../helper/inviteValidator";
 import noProfile from '../../assets/no-profile.png'
 import { TableLoader } from "./adminComponents/TableLoader";
+import { BackBtn } from "../../helper/backButton";
 export function AdminEmployee() {
     const [toastMessage, setToastMessage] = useState(false);
     const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -43,6 +44,9 @@ export function AdminEmployee() {
 
     const onErrors = errors => console.error(errors);
 
+    const hideToast = () => {
+        setToastMessage(false);
+    }
     useEffect(() => {
         setTableLoader(true);
         axios({
@@ -76,10 +80,26 @@ export function AdminEmployee() {
                     <div className="col-lg-12 p-5">
                         <div class="row">
                             <div class="col-lg-12">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="page-title-box d-flex align-items-center justify-content-between">
+                                            <div className="d-flex align-items-center">
+                                                <BackBtn />
+                                                <h4 class="mb-0 font-size-18">Employees</h4>
+                                            </div>
+
+                                            <div class="page-title-right">
+                                                <ol class="breadcrumb m-0">
+                                                    <li class="breadcrumb-item"><a href="javascript: void(0);">Employees</a></li>
+                                                </ol>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="card">
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">Invite</h5>
-
                                         <form class="row gy-2 gx-3 align-items-center" onSubmit={handleSubmit(onFormSubmit, onErrors)}>
                                             <div class="col-lg-4">
                                                 <label htmlFor="formrow-name-input" className="form-label">Email<span class="text-danger"> *</span></label>
@@ -106,7 +126,11 @@ export function AdminEmployee() {
                                                 </small>
                                             </div>
                                             <div class="col-lg-2 align-self-end">
-                                                <button type="submit" class="btn btn-primary w-md " disabled={disableBtn}>Invite</button>
+                                                <div className="d-flex justify-content-evenly">
+                                                    <button type="submit" class="btn btn-primary " disabled={disableBtn}>Invite</button>
+                                                    <div class="vr"></div>
+                                                    <button type="reset" class="btn btn-outline-danger" onClick={hideToast}>Reset</button>
+                                                </div>
                                             </div>
                                         </form>
                                     </div>
