@@ -16,10 +16,10 @@ app.use(cors())
 app.use("/employee",employeeRoutes);
 app.use("/admin",adminRoutes);
 app.use(
-    fileUpload({
-      useTempFiles: true,
-    })
-  );
+  fileUpload({
+    useTempFiles: true,
+  })
+);
 app.listen(process.env.PORT,()=>{
     console.log(`App running at http://localhost:${process.env.PORT}/`)
 })

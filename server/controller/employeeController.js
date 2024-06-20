@@ -14,21 +14,14 @@ const Bug = require("../models/bugModel");
 const Comment = require("../models/commentModel");
 const BugHistory = require("../models/bugHistoryModel");
 const cloudinary = require('cloudinary').v2;
+const { Worker } = require('worker_threads');
 require('dotenv').config();
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET
 });
-const dir = "E:/attendance/server";
-// load model function
-async function LoadModels() {
-    // Load the models
-    console.log("loading model");
-    await faceapi.nets.faceRecognitionNet.loadFromDisk(dir + "/faceApiModel");
-    await faceapi.nets.faceLandmark68Net.loadFromDisk(dir + "/faceApiModel");
-    await faceapi.nets.ssdMobilenetv1.loadFromDisk(dir + "/faceApiModel");
-}
+
 
 async function register(req, res) {
     try {
@@ -91,11 +84,11 @@ async function login(req, res) {
 }
 
 async function getRole(req, res) {
-    const email=req.user.email;
-    const details = await Employee.find({email:email},"firstName lastName profileImg role");
+    const email = req.user.email;
+    const details = await Employee.find({ email: email }, "firstName lastName profileImg role");
     try {
         const role = req.user.role;
-        res.status(200).json({ message: "Role found", role: role , details:details });
+        res.status(200).json({ message: "Role found", role: role, details: details });
     } catch (error) {
         console.error('Internal server error', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -164,7 +157,7 @@ async function markLogin(req, res) {
             const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
             if (result) {
                 // attendance marked
-                    res.status(200).json({ message: "Attendance marked", todayStatus: result })
+                res.status(200).json({ message: "Attendance marked", todayStatus: result })
             } else {
                 // attendance not marked
                 res.status(500).json({ message: "Attendance not marked. Internal server error" })
@@ -192,9 +185,9 @@ async function markLogout(req, res) {
     try {
         const result = await Attendance.findOneAndUpdate({ $and: [{ employeeEmail: email }, { today: currentDate }] }, { $set: updateFields }, { new: true })
         if (result.nModified != 0) {
-                res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result })
+            res.status(200).json({ message: "Attendance marked. Logged out", todayStatus: result })
         } else {
-                res.status(500).json({ message: "Attendance not marked. Internal server error" })
+            res.status(500).json({ message: "Attendance not marked. Internal server error" })
         }
     } catch (error) {
         console.error('Internal server error', error);
@@ -310,18 +303,18 @@ async function raiseBug(req, res) {
     }
 }
 
-async function getBugs(req,res){
+async function getBugs(req, res) {
     const email = req.user.email;
     const projectId = req.query.projectId;
     const page = req.query.page;
     const pageSize = req.query.pageSize;
-    const {type, priority, curr_status, role} = req.body;
+    const { type, priority, curr_status, role } = req.body;
     console.log("Request bidy :", req.body);
-    const [bugs,totalItems] = await getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize, role);
-    if(bugs){
-        res.status(200).json({message:"Bugs found", bugs:bugs, page:page,totalPages: Math.ceil(totalItems / pageSize)})
-    }else{
-        res.status(404).json({message:"Bugs not found"})
+    const [bugs, totalItems] = await getProjectBugs(projectId, email, curr_status, priority, type, page, pageSize, role);
+    if (bugs) {
+        res.status(200).json({ message: "Bugs found", bugs: bugs, page: page, totalPages: Math.ceil(totalItems / pageSize) })
+    } else {
+        res.status(404).json({ message: "Bugs not found" })
     }
 }
 
@@ -537,11 +530,11 @@ async function getEmployeeAttendance(req, res) {
     const email = req.user.email;
     const page = req.query.page;
     const pageSize = req.query.pageSize;
-    const [totalItems,attendance] = await getAllAttendance(email, page, pageSize)
-    if(attendance){
-        res.status(200).json({message:"Attendance", attendance:attendance, page:page,totalPages: Math.ceil(totalItems / pageSize)})
-    }else{
-        res.status(404).json({message:"No data found"})
+    const [totalItems, attendance] = await getAllAttendance(email, page, pageSize)
+    if (attendance) {
+        res.status(200).json({ message: "Attendance", attendance: attendance, page: page, totalPages: Math.ceil(totalItems / pageSize) })
+    } else {
+        res.status(404).json({ message: "No data found" })
     }
 }
 
@@ -549,10 +542,10 @@ async function getEmployeeAttendance(req, res) {
 
 async function getAllAttendance(email, page, pageSize) {
     try {
-        const totalItems = await Attendance.countDocuments({employeeEmail:email});
+        const totalItems = await Attendance.countDocuments({ employeeEmail: email });
         const result = await Attendance.find({ employeeEmail: email }).skip((page - 1) * pageSize).limit(pageSize).sort({ today: -1 });
         if (result) {
-            return [totalItems,result];
+            return [totalItems, result];
         } else {
             return null;
         }
@@ -562,25 +555,37 @@ async function getAllAttendance(email, page, pageSize) {
 }
 
 async function registerFace(userId, faceImageArray) {
-    await LoadModels();
     try {
         if (!faceImageArray || faceImageArray.length !== 5) {
             return false;
         }
         const labeledFaceDescriptors = [];
 
-        for (let image of faceImageArray) {
-            const img = await canvas.loadImage(image);
-            const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+        const workerPromises = faceImageArray.map((image, index) => {
+            console.log("Promise created");
+            return new Promise((resolve, reject)=>{
+                const worker = new Worker('E:/attendance/server/helper/faceWorker.js', { workerData: { image } });
 
-            if (!detections) {
-                console.log("Face not recognised");
-                return false;
-            }
-            const faceDescriptor = detections.descriptor;
-            labeledFaceDescriptors.push(Array.from(faceDescriptor));
-            console.log("Image saved");
-        }
+                worker.on('message', (message) => {
+                    if (message.error) {
+                        reject(new Error(message.error));
+                    } else {
+                        console.log("promise resolved");
+                        labeledFaceDescriptors[index] = message.descriptor;
+                        resolve();
+                    }
+                });
+    
+                worker.on('error', reject);
+                worker.on('exit', (code) => {
+                    if (code !== 0) {
+                        reject(new Error(`Worker stopped with exit code ${code}`));
+                    }
+                });
+            })
+        });
+
+        await Promise.all(workerPromises);
 
         // Save the labeled face descriptors to MongoDB
         console.log("Face descriptors :", labeledFaceDescriptors);
@@ -713,35 +718,35 @@ async function getProject(projectId) {
 
 const buildQuery = (projectId, curr_status, priority, type, email, role) => {
     let query = {
-      projectId: projectId,
+        projectId: projectId,
     };
-  
+
     if (curr_status != '') {
-      query.current_status = curr_status;
+        query.current_status = curr_status;
     }
-  
+
     if (priority != '') {
-      query.priority = priority;
+        query.priority = priority;
     }
-  
+
     if (type === "self") {
-        if(role==="Tester"){
+        if (role === "Tester") {
             query.raisedBy = email
-        }else{
+        } else {
             query.assignedTo = email;
         }
     }
-  
+
     return query;
 }
 
-async function getProjectBugs(projectId,email,curr_status,priority, type ,page, pageSize, role) {
+async function getProjectBugs(projectId, email, curr_status, priority, type, page, pageSize, role) {
     const castedpageSize = parseInt(pageSize);
     const query = buildQuery(projectId, curr_status, priority, type, email, role);
     console.log("Query :", query);
     try {
         // const result = await Bug.find({ projectId: projectId });
-        const totalItems = await Bug.countDocuments({projectId: projectId});
+        const totalItems = await Bug.countDocuments({ projectId: projectId });
         const result = await Bug.aggregate([
             {
                 $match: query
@@ -797,9 +802,9 @@ async function getProjectBugs(projectId,email,curr_status,priority, type ,page, 
                     "latest_update": 1
                 }
             }
-        ]).skip( (page-1) * pageSize ).limit(castedpageSize).sort({ latest_update: -1 });
+        ]).skip((page - 1) * pageSize).limit(castedpageSize).sort({ latest_update: -1 });
         if (result) {
-            return [result,totalItems];
+            return [result, totalItems];
         } else {
             return null;
         }
