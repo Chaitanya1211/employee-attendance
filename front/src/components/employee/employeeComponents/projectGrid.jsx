@@ -3,10 +3,16 @@ import axios from "axios";
 import { Link } from 'react-router-dom';
 import noProject from '../../../assets/no-project.png';
 import { toISTLocaleString } from "../../../helper/dates";
+import { ProjectCardSkeleton } from "../../../helper/Skeletons/ProjectCardSkeleton";
+
 export function ProjectGrid() {
     const [token, getToken] = useState(localStorage.getItem('token') || '');
     const [projects, setProjects] = useState([]);
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
+        setLoading(true);
+        console.log("loading:", loading);
         axios({
             url: "http://localhost:8080/employee/projects",
             method: "GET",
@@ -18,6 +24,7 @@ export function ProjectGrid() {
             if (response.status === 200) {
                 setProjects(response.data?.projects)
             }
+            setLoading(false);
         }).catch((error) => {
             console.log("Error :", error)
         })
@@ -25,7 +32,17 @@ export function ProjectGrid() {
 
     return (
         <>
+            {loading ? <>
+                <div className="row">
+                    {[1, 2, 3, 4].map((item, index) => (
+                        <div className="col-xl-3 col-md-6" key={index}>
+                            <ProjectCardSkeleton />
+                        </div>
+                    ))}
+                </div>
+            </> : <>
             <div class="row" id="jobgrid-list">
+
                 {
                     projects.length != 0 ? <>
                         {
@@ -64,6 +81,7 @@ export function ProjectGrid() {
                     </> : <> <h4>No projects found</h4> </>
                 }
             </div>
+            </>}
         </>
     );
 }

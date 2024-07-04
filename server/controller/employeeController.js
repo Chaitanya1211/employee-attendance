@@ -608,6 +608,15 @@ async function registerFace(userId, faceImageArray) {
     }
 }
 
+const dir = "E:/attendance/server";
+async function LoadModels() {
+    // Load the models
+    console.log("loading model");
+    await faceapi.nets.faceRecognitionNet.loadFromDisk(dir + "/faceApiModel");
+    await faceapi.nets.faceLandmark68Net.loadFromDisk(dir + "/faceApiModel");
+    await faceapi.nets.ssdMobilenetv1.loadFromDisk(dir + "/faceApiModel");
+}
+
 async function matchFace(email, image) {
     await LoadModels();
     try {
