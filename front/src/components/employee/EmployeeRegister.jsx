@@ -94,8 +94,6 @@ export function EmployeeRegister() {
             }).catch((error) => {
                 setLoader(false);
                 console.log("Error Response code:", error.response.status);
-
-
             });
         } else {
             setCurrentStep(currentStep + 1);
