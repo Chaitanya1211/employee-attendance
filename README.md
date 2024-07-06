@@ -1,13 +1,13 @@
 # Employee Attendance and Bug Management Platform
 
 ## Table of Contents
-1. [Project Overview]
-2. [Features]
-3. [Roles]
-4. [Setup Instructions]
-5. [Usage]
-6. [Technologies Used]
-7. [Important Points]
+1. Project Overview
+2. Features
+3. Roles
+4. Setup Instructions
+5. Usage
+6. Technologies Used
+7. Important Points
 
 ## Project Overview
 This project is designed to monitor the attendance of employees using face recognition technology and manage project-related bugs. The platform allows administrators to invite employees to register, assign roles, and manage projects. Employees can register using an invitation link, set up their profile, and register their face using the face API. Attendance is marked by face recognition. The platform supports three roles: Developer, QA/Tester, and Intern. 
