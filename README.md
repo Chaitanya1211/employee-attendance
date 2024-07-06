@@ -75,7 +75,7 @@ This project is designed to monitor the attendance of employees using face recog
 - **Authentication**: JWT
 
 ## Important Points
--- **Create a admin via postman**
+- **Create a admin via postman**
 You will have to create admin credentials for admin via Postman as the page for new admin registration is not available
 
   ```bash
@@ -86,7 +86,7 @@ You will have to create admin credentials for admin via Postman as the page for 
     "password" : "admin_password"
   }
 
--- **URL for front end**
+- **URL for front end**
   ```bash
   Admin login : http://localhost:5173/admin/login
   Employee Login : http://localhost:5173/login
